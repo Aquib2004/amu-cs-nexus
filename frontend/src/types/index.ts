@@ -7,3 +7,12 @@ export interface HealthResponse {
   version: string;
   environment: string;
 }
+
+// Matches one item returned by GET /api/notices on the backend.
+export interface Notice {
+  id: string;
+  title: string;
+  url: string;
+  category: string | null;
+  published_at: string | null;
+}

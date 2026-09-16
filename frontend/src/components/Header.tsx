@@ -1,26 +1,32 @@
-﻿// Top navigation bar showing the planned AMUCS Nexus areas.
+// Top navigation bar showing the planned AMUCS Nexus areas.
+// Areas with an href are built pages; the rest are placeholders.
 
-export const NAV_AREAS = [
-  "Chat",
-  "Search",
-  "Notices",
-  "Documents",
-  "Faculty",
-  "Research",
-] as const;
+export const NAV_AREAS: { label: string; href?: string }[] = [
+  { label: "Chat" },
+  { label: "Search" },
+  { label: "Notices", href: "/notices" },
+  { label: "Documents" },
+  { label: "Faculty" },
+  { label: "Research" },
+];
 
 export default function Header() {
   return (
     <header className="site-header">
-      <a className="brand" href="#top">
+      <a className="brand" href="/">
         AMUCS Nexus
       </a>
       <nav aria-label="Main navigation">
         <ul>
-          {NAV_AREAS.map((area) => (
-            <li key={area}>
-              {/* Becomes a real link when each page is built. */}
-              <span className="nav-pending">{area}</span>
+          {NAV_AREAS.map((item) => (
+            <li key={item.label}>
+              {item.href ? (
+                <a className="nav-link" href={item.href}>
+                  {item.label}
+                </a>
+              ) : (
+                <span className="nav-pending">{item.label}</span>
+              )}
             </li>
           ))}
         </ul>

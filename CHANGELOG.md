@@ -8,15 +8,14 @@ The format is inspired by Keep a Changelog, with versioning following semantic v
 
 ### Added
 
-- Monorepo skeleton: frontend, backend, ingestion, database, ai, shared, tests, docs, infra.
-- Environment template (`.env.example`) and `.gitignore`.
-- Open-source documentation skeleton: LICENSE (pending), CONTRIBUTING, CODE_OF_CONDUCT, SECURITY.
+- Monorepo skeleton, env template, `.gitignore`, open-source docs skeleton.
 - Phase 1 architecture docs and ADR-001.
 - Phase 0 requirements (draft).
-- Backend foundation (Phase 3): config, logging, error handling, tested `/api/health`.
-- Database layer (Phase 4): SQLAlchemy models, repositories, Alembic migration, SQLite-backed tests.
-- Frontend foundation (Phase 5): Next.js layout, typed API client, health service, home page; `package-lock.json`.
+- Phase 3 backend foundation: config, logging, error handling, `/api/health`.
+- Phase 4 database: SQLAlchemy models, repositories, Alembic migration, SQLite tests.
+- Phase 5 frontend foundation: Next.js layout, typed API client, health service, home page.
+- Phase 6 API integration: `GET /api/notices` and `GET /api/notices/{id}` on the backend; `/notices` page on the frontend; API tests; live end-to-end verified.
 
 ### Not yet implemented
 
-- Production UI for Chat/Search/Notices/Documents/Faculty/Research, backend business endpoints, frontend tests, crawler, ingestion, embeddings/pgvector, vector search, RAG, LLM integration, running PostgreSQL server, authentication, deployment.
+- Search, Chat, Documents, Faculty, Research UI + endpoints, frontend tests, crawler, ingestion, embeddings/pgvector, vector search, RAG, LLM integration, running PostgreSQL server, authentication, deployment.

@@ -4,7 +4,7 @@ Project:
 AMUCS Nexus
 
 Current phase:
-Phase 5 - Frontend foundation (implemented; type-check verified)
+Phase 6 - API integration (implemented and tested)
 
 ## Completed
 
@@ -14,41 +14,37 @@ Phase 5 - Frontend foundation (implemented; type-check verified)
 
 ## Phase 1 - architecture documentation (committed)
 
-- component diagram, data flows, sequence diagrams
-- database architecture + storage boundaries, API boundary, ingestion flow, RAG flow
+- component diagram, data flows, sequence diagrams, database architecture, API boundary, ingestion flow, RAG flow
 - ADR-001: modular monolith + PostgreSQL/pgvector
 
 ## Phase 0 - requirements (DRAFT)
 
 - product-requirements.md, functional-requirements.md, non-functional-requirements.md
 
-## Phase 3 - backend foundation (implemented + tested)
+## Phase 3 / 4 - backend + database (implemented + tested)
 
-- FastAPI wiring, settings, logging, error handling, `/api/health`
-- 4 API tests passing
-
-## Phase 4 - database layer (implemented + tested)
-
+- FastAPI foundation, `/api/health`, settings, logging, error handling
 - SQLAlchemy models (Document, Chunk, Notice), repositories, Alembic migration 0001
-- 4 database tests passing; `alembic upgrade head` verified
+- PostgreSQL via DATABASE_URL; SQLite fallback for dev/tests
 
 ## Phase 5 - frontend foundation (implemented)
 
-- Next.js (App Router) layout with header/nav/footer
-- Typed API client and health service (`src/lib/api.ts`, `src/services/health.ts`)
-- Types (`src/types`) and a home page that live-fetches backend `/api/health`
-- TypeScript type-check passes (`tsc --noEmit`). Full `next build` blocked by a corrupted Next.js native compiler (SWC) left by an interrupted `npm install` in this environment - not a code issue. Resolve locally with a clean `npm install`.
+- Next.js layout, typed API client, health service, home page
+- TypeScript type-check verified. Full `next build` blocked in this env by corrupted Next SWC binary (resolves with clean `npm install`).
+
+## Phase 6 - API integration (implemented + tested)
+
+- Backend: `GET /api/notices` and `GET /api/notices/{id}` (Pydantic schema + NoticeRepository + get_db dependency).
+- Frontend: `/notices` page calls the API and renders notices; Header links to it.
+- 3 new API tests (list, get, 404). Live end-to-end verified over HTTP from the PostgreSQL-target SQLite dev DB.
 
 ## Implemented to date
 
-- backend health endpoint with config, logging, error handling
-- database models, repositories, migrations
-- frontend foundation (layout + typed API client + health page)
+- backend health endpoint, database models/repositories/migrations, notices API + frontend notices page
 
 ## Not implemented
 
-- production UI for Chat/Search/Notices/Documents/Faculty/Research
-- backend business endpoints (notices, search, chat, documents, faculty, feedback)
+- Search, Chat, Documents, Faculty, Research UI + endpoints
 - frontend tests
 - crawler
 - PDF ingestion

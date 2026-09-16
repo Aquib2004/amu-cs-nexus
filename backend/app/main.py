@@ -2,12 +2,11 @@
 #
 # Creates the FastAPI application and wires together the foundation:
 # configuration (settings), logging, error handling, and routers.
-# Business endpoints (search, chat, notices, documents, faculty) come
-# in later phases.
 
 from fastapi import FastAPI
 
 from app.api.health import router as health_router
+from app.api.notices import router as notices_router
 from app.core.config import settings
 from app.core.errors import register_error_handlers
 from app.core.logging import setup_logging
@@ -25,6 +24,7 @@ app.state.settings = settings
 
 # Mount routers under the /api prefix.
 app.include_router(health_router, prefix="/api")
+app.include_router(notices_router, prefix="/api")
 
 # Register global exception handlers: AppError -> safe JSON,
 # anything else -> a logged 500 with a generic client message.

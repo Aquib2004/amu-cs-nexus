@@ -24,6 +24,11 @@ class NoticeRepository:
         stmt = select(func.count()).select_from(Notice)
         return self.session.scalar(stmt) or 0
 
-    def list_recent(self, limit: int = 50) -> list[Notice]:
-        stmt = select(Notice).order_by(Notice.published_at.desc()).limit(limit)
+    def list_recent(self, limit: int = 50, offset: int = 0) -> list[Notice]:
+        stmt = (
+            select(Notice)
+            .order_by(Notice.published_at.desc())
+            .limit(limit)
+            .offset(offset)
+        )
         return list(self.session.scalars(stmt))
