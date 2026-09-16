@@ -1,0 +1,2 @@
+﻿# Ingestion dependencies will be added when parsing and crawling are implemented.
+

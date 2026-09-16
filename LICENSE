@@ -1,0 +1,23 @@
+﻿# License
+
+## Status: License choice PENDING
+
+The project license has not been decided yet. This file is a placeholder.
+
+## Common open-source license choices
+
+Before choosing, consider these widely used options:
+
+- **MIT** - simple, permissive. Grants freedom to use and modify with attribution. Easy for others to adopt. Good default for many libraries and apps.
+- **Apache License 2.0** - permissive, adds explicit patent grant and protections. Common for larger projects.
+- **BSD (2/3-clause)** - permissive, similar in spirit to MIT.
+- **GPL-3.0** - copyleft. Derivatives must also be open source. Stronger protections for the community, stricter for commercial use.
+
+## Recommendation to decide later
+
+AMUCS Nexus is a public, educational, source-grounded project. A permissive license such as **MIT** or **Apache-2.0** is a sensible default, but the final choice should be made by the project maintainer(s). No license is granted to anyone until this file is finalized by the maintainers.
+
+## When a license is selected
+
+Replace this placeholder with the full, canonical license text and update this note.
+

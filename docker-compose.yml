@@ -1,0 +1,12 @@
+﻿# ============================================================
+# AMUCS Nexus - Docker Compose
+# ============================================================
+# PLACEHOLDER ONLY.
+# No services are defined yet. Docker / containerization is
+# introduced in a later phase (Phase 14), not during repository
+# initialization. This file exists to reserve the root filename
+# and to record intent. Do not add services until there is an
+# actual running application to containerize.
+services:
+  {}:
+
