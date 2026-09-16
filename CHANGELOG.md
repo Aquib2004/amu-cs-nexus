@@ -13,9 +13,10 @@ The format is inspired by Keep a Changelog, with versioning following semantic v
 - Open-source documentation skeleton: LICENSE (pending), CONTRIBUTING, CODE_OF_CONDUCT, SECURITY.
 - Phase 1 architecture docs and ADR-001.
 - Phase 0 requirements (draft).
-- Backend foundation (Phase 3): FastAPI wiring, settings, logging, error handling, tested `/api/health`.
-- Database layer (Phase 4): SQLAlchemy models (`Document`, `Chunk`, `Notice`), repositories, and an Alembic initial migration. Validated with in-memory SQLite tests.
+- Backend foundation (Phase 3): config, logging, error handling, tested `/api/health`.
+- Database layer (Phase 4): SQLAlchemy models, repositories, Alembic migration, SQLite-backed tests.
+- Frontend foundation (Phase 5): Next.js layout, typed API client, health service, home page; `package-lock.json`.
 
 ### Not yet implemented
 
-- Production UI, business REST endpoints (notices/search/chat), crawler, ingestion pipeline, embeddings/pgvector, vector search, RAG, LLM integration, running PostgreSQL server, authentication, deployment.
+- Production UI for Chat/Search/Notices/Documents/Faculty/Research, backend business endpoints, frontend tests, crawler, ingestion, embeddings/pgvector, vector search, RAG, LLM integration, running PostgreSQL server, authentication, deployment.

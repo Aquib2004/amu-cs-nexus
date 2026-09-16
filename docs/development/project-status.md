@@ -4,65 +4,59 @@ Project:
 AMUCS Nexus
 
 Current phase:
-Phase 4 - Database layer (implemented and tested)
+Phase 5 - Frontend foundation (implemented; type-check verified)
 
 ## Completed
 
-- project root
-- frontend structure
-- backend structure
-- ingestion structure
-- database structure
-- AI structure
-- shared structure
-- tests structure
-- documentation structure
-- infrastructure structure
-- Git repository
-- environment template
-- open-source documentation skeleton
+- project root and full monorepo structure
+- environment template and open-source documentation skeleton
+- Git repository (on GitHub)
 
 ## Phase 1 - architecture documentation (committed)
 
 - component diagram, data flows, sequence diagrams
-- database architecture + storage boundaries
-- API boundary + HTTP/REST primer
-- ingestion flow, RAG flow
+- database architecture + storage boundaries, API boundary, ingestion flow, RAG flow
 - ADR-001: modular monolith + PostgreSQL/pgvector
 
-## Phase 0 - requirements (DRAFT, for review)
+## Phase 0 - requirements (DRAFT)
 
 - product-requirements.md, functional-requirements.md, non-functional-requirements.md
 
 ## Phase 3 - backend foundation (implemented + tested)
 
-- FastAPI wiring, settings, logging, global error handling, `/api/health`
+- FastAPI wiring, settings, logging, error handling, `/api/health`
 - 4 API tests passing
 
 ## Phase 4 - database layer (implemented + tested)
 
-- Engine/session/Base in `app/core/database.py` (PostgreSQL via DATABASE_URL, SQLite fallback for dev/tests).
-- Models: Document, Chunk, Notice (`app/models/`).
-- Repositories: DocumentRepository, NoticeRepository + BaseRepository (`app/repositories/`).
-- Alembic migrations (`backend/alembic/`) with initial schema 0001.
-- Tests validate models + repositories on in-memory SQLite: 4 tests passing. Alembic `upgrade head` verified to create all tables.
+- SQLAlchemy models (Document, Chunk, Notice), repositories, Alembic migration 0001
+- 4 database tests passing; `alembic upgrade head` verified
+
+## Phase 5 - frontend foundation (implemented)
+
+- Next.js (App Router) layout with header/nav/footer
+- Typed API client and health service (`src/lib/api.ts`, `src/services/health.ts`)
+- Types (`src/types`) and a home page that live-fetches backend `/api/health`
+- TypeScript type-check passes (`tsc --noEmit`). Full `next build` blocked by a corrupted Next.js native compiler (SWC) left by an interrupted `npm install` in this environment - not a code issue. Resolve locally with a clean `npm install`.
 
 ## Implemented to date
 
-- backend health endpoint with configuration, logging, and error handling
-- database models, repositories, and migrations
+- backend health endpoint with config, logging, error handling
+- database models, repositories, migrations
+- frontend foundation (layout + typed API client + health page)
 
 ## Not implemented
 
-- production UI
-- REST business endpoints (notices, search, chat, documents, faculty, feedback)
+- production UI for Chat/Search/Notices/Documents/Faculty/Research
+- backend business endpoints (notices, search, chat, documents, faculty, feedback)
+- frontend tests
 - crawler
 - PDF ingestion
 - embeddings and pgvector column
 - vector search
 - RAG
 - LLM integration
-- PostgreSQL server running locally (deferred to containerization)
+- running PostgreSQL server (deferred to containerization)
 - LangChain / LangGraph / MCP
 - authentication
 - deployment

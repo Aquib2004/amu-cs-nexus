@@ -1,35 +1,47 @@
-﻿# AMUCS Nexus - Frontend
+# AMUCS Nexus - Frontend
 
-React + TypeScript frontend for AMUCS Nexus, built with Next.js.
+React + TypeScript frontend for AMUCS Nexus, built with Next.js (App Router).
 
-> STATUS: Foundation only. No production UI or features are implemented yet.
+> STATUS: Foundation (Phase 5). Layout, typed API client, health service, and a home page that talks to the backend are implemented. Product areas (Chat, Search, Notices, Documents, Faculty, Research) are stubbed, not built.
 
-## Directory layout
+## Structure
 
-- `src/app` - Next.js App Router pages and route handlers.
-- `src/components` - reusable UI components.
-- `src/features` - feature-scoped code (Chat, Search, Notices, Documents, Faculty, Research).
-- `src/hooks` - custom React hooks.
-- `src/lib` - shared internal helpers.
-- `src/services` - clients for backend APIs.
-- `src/types` - TypeScript types shared across the frontend.
-- `src/utils` - pure helper functions.
-- `src/styles` - stylesheets.
-- `public` - static assets.
-- `tests` - frontend tests.
+- `src/app` - App Router pages and layout.
+- `src/components` - reusable components (`Header`).
+- `src/features` - feature-scoped code (planned: Chat, Search, Notices, ...).
+- `src/hooks` - custom hooks (empty).
+- `src/lib` - shared helpers (`api.ts` = API base config).
+- `src/services` - backend-facing services (`health.ts`).
+- `src/types` - TypeScript types (`HealthResponse`, env types).
+- `src/utils` - pure helpers (empty).
+- `src/styles` - global styles.
+- `public` - static assets (empty).
+- `tests` - frontend tests (planned).
 
-## Planned areas
+## Client/server pattern
 
-- Chat
-- Search
-- Notices
-- Documents
-- Faculty
-- Research
+`src/services/health.ts` shows the client/server flow: the browser (client) sends
+an HTTP GET to the FastAPI server and reads the JSON response. The API base URL
+comes from `NEXT_PUBLIC_API_URL` (see root `.env.example`) and defaults to
+`http://localhost:8000`.
 
-The UI will not force every user through chat. A user looking for a notice should be able to search notices directly.
+## Run (dependencies installed)
 
-## Setup (not yet complete)
+```bash
+npm install
+npm run dev
+```
 
-The frontend is a skeleton. Running `npm install` and `npm run dev` will be documented when the backend API and UI foundation are implemented.
+Open http://localhost:3000. Run the backend first (`uvicorn app.main:app` in
+`backend/`) so the home page can show live backend status.
 
+## Verify
+
+```bash
+npm run build      # production build + type check
+npx tsc --noEmit   # type check only
+```
+
+Note: a full `next build` needs a clean, complete `npm install` (the Next.js native
+compiler/SWC must be present). If you have a partial/broken install, delete
+`node_modules` and run `npm install` again, then `npm run build`.

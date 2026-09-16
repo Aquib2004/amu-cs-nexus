@@ -65,3 +65,7 @@ pgdata/
 .env.development.local
 .env.test.local
 
+
+# TypeScript incremental build info
+*.tsbuildinfo
+

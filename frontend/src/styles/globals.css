@@ -1,6 +1,89 @@
-﻿html,
+/* Global styles for the AMUCS Nexus frontend foundation. */
+
+* {
+  box-sizing: border-box;
+}
+
+html,
 body {
   padding: 0;
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+    Arial, sans-serif;
+  color: #1a1a1a;
+  background: #f7f8fa;
+}
+
+a {
+  color: inherit;
+}
+
+.site-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.5rem;
+  background: #0b3d2e;
+  color: #fff;
+}
+
+.brand {
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.site-header ul {
+  display: flex;
+  gap: 1rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.nav-pending {
+  opacity: 0.85;
+  cursor: default;
+}
+
+main {
+  max-width: 60rem;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+
+.hero h1 {
+  font-size: 2rem;
+}
+
+.status-card {
+  margin-top: 2rem;
+  padding: 1.5rem;
+  border: 1px solid #d6dbe2;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.status-card dl {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.5rem 1.5rem;
+}
+
+.status-card dt {
+  font-weight: 600;
+}
+
+.status-card dd {
+  margin: 0;
+}
+
+.error {
+  color: #b3261e;
+}
+
+.site-footer {
+  padding: 1.5rem;
+  text-align: center;
+  color: #6b7280;
+  font-size: 0.9rem;
 }
