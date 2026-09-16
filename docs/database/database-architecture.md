@@ -64,3 +64,8 @@ These are planned shapes to guide later phases; exact columns will be finalized 
 - Semantic queries use pgvector. Hybrid search combines both.
 - Raw files live in object/file storage; the database references them by URL or key, not as blobs.
 
+
+## Current implementation status
+
+As of Phase 4, the SQLAlchemy models (Document, Chunk, Notice), repositories, and an Alembic initial migration exist under ackend/. They are validated with in-memory SQLite tests. A running PostgreSQL server and the pgvector embedding column are not yet in place; the embedding column will be added in the embeddings phase.
+

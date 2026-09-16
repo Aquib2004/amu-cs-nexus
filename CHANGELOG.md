@@ -13,8 +13,9 @@ The format is inspired by Keep a Changelog, with versioning following semantic v
 - Open-source documentation skeleton: LICENSE (pending), CONTRIBUTING, CODE_OF_CONDUCT, SECURITY.
 - Phase 1 architecture docs and ADR-001.
 - Phase 0 requirements (draft).
-- Backend foundation (Phase 3): FastAPI wiring, settings (pydantic-settings), logging, global error handling with `AppError`, and a tested `/api/health` endpoint. Backend dependencies and dev deps in `requirements.txt` / `requirements-dev.txt`.
+- Backend foundation (Phase 3): FastAPI wiring, settings, logging, error handling, tested `/api/health`.
+- Database layer (Phase 4): SQLAlchemy models (`Document`, `Chunk`, `Notice`), repositories, and an Alembic initial migration. Validated with in-memory SQLite tests.
 
 ### Not yet implemented
 
-- Production UI, business REST endpoints (notices/search/chat), crawler, ingestion pipeline, embeddings, vector search, database models/migrations, RAG, LLM integration, authentication, deployment.
+- Production UI, business REST endpoints (notices/search/chat), crawler, ingestion pipeline, embeddings/pgvector, vector search, RAG, LLM integration, running PostgreSQL server, authentication, deployment.

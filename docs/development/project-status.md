@@ -4,7 +4,7 @@ Project:
 AMUCS Nexus
 
 Current phase:
-Phase 3 - Backend Foundation (implemented and tested)
+Phase 4 - Database layer (implemented and tested)
 
 ## Completed
 
@@ -36,17 +36,21 @@ Phase 3 - Backend Foundation (implemented and tested)
 
 ## Phase 3 - backend foundation (implemented + tested)
 
-- FastAPI application wiring in `app/main.py` (config, logging, error handling, routers).
-- Settings via pydantic-settings (`app/core/config.py`).
-- Logging setup (`app/core/logging.py`).
-- Global exception handlers + `AppError` (`app/core/errors.py`).
-- `/api/health` returns status + application identity.
-- API tests in `backend/tests/test_health.py` - 4 passing.
-- Isolated venv at `backend/.venv`; deps in `requirements.txt` + `requirements-dev.txt`.
+- FastAPI wiring, settings, logging, global error handling, `/api/health`
+- 4 API tests passing
+
+## Phase 4 - database layer (implemented + tested)
+
+- Engine/session/Base in `app/core/database.py` (PostgreSQL via DATABASE_URL, SQLite fallback for dev/tests).
+- Models: Document, Chunk, Notice (`app/models/`).
+- Repositories: DocumentRepository, NoticeRepository + BaseRepository (`app/repositories/`).
+- Alembic migrations (`backend/alembic/`) with initial schema 0001.
+- Tests validate models + repositories on in-memory SQLite: 4 tests passing. Alembic `upgrade head` verified to create all tables.
 
 ## Implemented to date
 
 - backend health endpoint with configuration, logging, and error handling
+- database models, repositories, and migrations
 
 ## Not implemented
 
@@ -54,14 +58,12 @@ Phase 3 - Backend Foundation (implemented and tested)
 - REST business endpoints (notices, search, chat, documents, faculty, feedback)
 - crawler
 - PDF ingestion
-- embeddings
+- embeddings and pgvector column
 - vector search
-- database models / migrations
 - RAG
 - LLM integration
-- LangChain
-- LangGraph
-- MCP
+- PostgreSQL server running locally (deferred to containerization)
+- LangChain / LangGraph / MCP
 - authentication
 - deployment
 
