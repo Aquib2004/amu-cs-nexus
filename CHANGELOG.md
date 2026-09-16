@@ -11,12 +11,9 @@ The format is inspired by Keep a Changelog, with versioning following semantic v
 - Monorepo skeleton: frontend, backend, ingestion, database, ai, shared, tests, docs, infra.
 - Environment template (`.env.example`) and `.gitignore`.
 - Open-source documentation skeleton: LICENSE (pending), CONTRIBUTING, CODE_OF_CONDUCT, SECURITY.
-- Initial architecture and project-status documentation.
 - Initial Git repository with the `chore: initialize AMUCS Nexus monorepo` commit.
-
-### Changed
-
-- Architecture (Phase 1): component diagram, data flows, sequence diagrams, database architecture, API boundary, ingestion flow, RAG flow, and ADR-001.
+- Phase 1 architecture: component diagram, data flows, sequence diagrams, database architecture, API boundary, ingestion flow, RAG flow, and ADR-001.
+- Phase 0 requirements (draft): product, functional, and non-functional requirements.
 
 ### Not yet implemented
 
