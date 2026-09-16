@@ -14,7 +14,10 @@ The format is inspired by Keep a Changelog, with versioning following semantic v
 - Initial architecture and project-status documentation.
 - Initial Git repository with the `chore: initialize AMUCS Nexus monorepo` commit.
 
+### Changed
+
+- Architecture (Phase 1): component diagram, data flows, sequence diagrams, database architecture, API boundary, ingestion flow, RAG flow, and ADR-001.
+
 ### Not yet implemented
 
 - Production UI, business REST endpoints, crawler, ingestion pipeline, embeddings, vector search, RAG, LLM integration, authentication, deployment.
-

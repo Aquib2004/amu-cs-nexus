@@ -4,7 +4,7 @@ Project:
 AMUCS Nexus
 
 Current phase:
-Repository initialization
+Phase 1 - System architecture (design and documentation)
 
 ## Completed
 
@@ -21,6 +21,17 @@ Repository initialization
 - Git repository
 - environment template
 - open-source documentation skeleton
+
+## Phase 1 - architecture documentation
+
+- component diagram (`docs/architecture/component-diagram.md`)
+- data flows (`docs/architecture/data-flow.md`)
+- sequence diagrams (`docs/architecture/sequence-diagrams.md`)
+- database architecture + storage boundaries (`docs/database/database-architecture.md`)
+- API boundary + HTTP/REST primer (`docs/api/api-boundary.md`)
+- ingestion flow (`docs/ingestion/ingestion-flow.md`)
+- RAG flow (`docs/rag/rag-flow.md`)
+- decision record: modular monolith + PostgreSQL/pgvector (`docs/decisions/ADR-001-modular-monolith-postgres-pgvector.md`)
 
 ## Implemented (minimal)
 
@@ -47,4 +58,3 @@ Repository initialization
 - V1: notices, documents, official pages, search, basic RAG, citations, chat.
 - V2: faculty, research, courses, metadata filtering, hybrid search, reranking, scheduled ingestion, document versioning, evaluation dashboard.
 - V3: LangGraph, tools, MCP, multi-step retrieval, advanced tool calling (only if justified).
-
