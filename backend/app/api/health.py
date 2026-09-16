@@ -1,15 +1,21 @@
-﻿# Health check endpoints.
+﻿# Health check endpoint.
 #
-# A health endpoint lets load balancers, uptime monitors, and the
-# frontend confirm the API is running. It holds no business logic.
+# The health endpoint has no business logic. It confirms the service is
+# running and reports basic application identity from settings, so uptime
+# monitors, load balancers, and the frontend can check the API.
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
 
-# APIRouter groups related endpoints. It is mounted into the app in main.py.
-router = APIRouter(tags=["health"])  # type: ignore
+router = APIRouter(tags=["health"])
 
 
 @router.get("/health")
-def health() -> dict[str, str]:
-    """Return service status."""
-    return {"status": "ok"}
+def health(request: Request) -> dict[str, str]:
+    """Return service status and basic identity."""
+    settings = request.app.state.settings
+    return {
+        "status": "ok",
+        "application": settings.project_name,
+        "version": settings.version,
+        "environment": settings.environment,
+    }

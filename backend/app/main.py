@@ -1,20 +1,31 @@
 ﻿# AMUCS Nexus backend entry point.
 #
-# This module creates the FastAPI application and mounts the API routers.
-# At repository initialization the only implemented route is the health
-# check. Business endpoints (search, chat, notices, documents, faculty)
-# will be added in later phases.
+# Creates the FastAPI application and wires together the foundation:
+# configuration (settings), logging, error handling, and routers.
+# Business endpoints (search, chat, notices, documents, faculty) come
+# in later phases.
 
 from fastapi import FastAPI
 
 from app.api.health import router as health_router
+from app.core.config import settings
+from app.core.errors import register_error_handlers
+from app.core.logging import setup_logging
+
+# Configure logging once, using the level from settings.
+setup_logging(settings.log_level)
 
 app = FastAPI(
-    title="AMUCS Nexus API",
-    description="REST API for AMUCS Nexus.",
-    version="0.1.0",
+    title=settings.project_name,
+    version=settings.version,
 )
 
-# Mount the health router under the /api prefix.
-# The routerpath /api/health is reachable once the server runs.
+# Store settings on the app so route handlers can read configuration.
+app.state.settings = settings
+
+# Mount routers under the /api prefix.
 app.include_router(health_router, prefix="/api")
+
+# Register global exception handlers: AppError -> safe JSON,
+# anything else -> a logged 500 with a generic client message.
+register_error_handlers(app)

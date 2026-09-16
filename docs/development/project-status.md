@@ -4,7 +4,7 @@ Project:
 AMUCS Nexus
 
 Current phase:
-Phase 0 - Requirements (draft) + Phase 1 - Architecture docs
+Phase 3 - Backend Foundation (implemented and tested)
 
 ## Completed
 
@@ -22,35 +22,41 @@ Phase 0 - Requirements (draft) + Phase 1 - Architecture docs
 - environment template
 - open-source documentation skeleton
 
-## Phase 1 - architecture documentation
+## Phase 1 - architecture documentation (committed)
 
-- component diagram (`docs/architecture/component-diagram.md`)
-- data flows (`docs/architecture/data-flow.md`)
-- sequence diagrams (`docs/architecture/sequence-diagrams.md`)
-- database architecture + storage boundaries (`docs/database/database-architecture.md`)
-- API boundary + HTTP/REST primer (`docs/api/api-boundary.md`)
-- ingestion flow (`docs/ingestion/ingestion-flow.md`)
-- RAG flow (`docs/rag/rag-flow.md`)
-- decision record: modular monolith + PostgreSQL/pgvector (`docs/decisions/ADR-001-modular-monolith-postgres-pgvector.md`)
+- component diagram, data flows, sequence diagrams
+- database architecture + storage boundaries
+- API boundary + HTTP/REST primer
+- ingestion flow, RAG flow
+- ADR-001: modular monolith + PostgreSQL/pgvector
 
 ## Phase 0 - requirements (DRAFT, for review)
 
-- product requirements (`docs/requirements/product-requirements.md`)
-- functional requirements (`docs/requirements/functional-requirements.md`)
-- non-functional requirements (`docs/requirements/non-functional-requirements.md`)
+- product-requirements.md, functional-requirements.md, non-functional-requirements.md
 
-## Implemented (minimal)
+## Phase 3 - backend foundation (implemented + tested)
 
-- backend health endpoint skeleton (`GET /api/health`)
+- FastAPI application wiring in `app/main.py` (config, logging, error handling, routers).
+- Settings via pydantic-settings (`app/core/config.py`).
+- Logging setup (`app/core/logging.py`).
+- Global exception handlers + `AppError` (`app/core/errors.py`).
+- `/api/health` returns status + application identity.
+- API tests in `backend/tests/test_health.py` - 4 passing.
+- Isolated venv at `backend/.venv`; deps in `requirements.txt` + `requirements-dev.txt`.
+
+## Implemented to date
+
+- backend health endpoint with configuration, logging, and error handling
 
 ## Not implemented
 
 - production UI
-- REST business endpoints
+- REST business endpoints (notices, search, chat, documents, faculty, feedback)
 - crawler
 - PDF ingestion
 - embeddings
 - vector search
+- database models / migrations
 - RAG
 - LLM integration
 - LangChain
