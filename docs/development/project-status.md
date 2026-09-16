@@ -4,7 +4,7 @@ Project:
 AMUCS Nexus
 
 Current phase:
-Phase 1 - System architecture (design and documentation)
+Phase 0 - Requirements (draft) + Phase 1 - Architecture docs
 
 ## Completed
 
@@ -32,6 +32,12 @@ Phase 1 - System architecture (design and documentation)
 - ingestion flow (`docs/ingestion/ingestion-flow.md`)
 - RAG flow (`docs/rag/rag-flow.md`)
 - decision record: modular monolith + PostgreSQL/pgvector (`docs/decisions/ADR-001-modular-monolith-postgres-pgvector.md`)
+
+## Phase 0 - requirements (DRAFT, for review)
+
+- product requirements (`docs/requirements/product-requirements.md`)
+- functional requirements (`docs/requirements/functional-requirements.md`)
+- non-functional requirements (`docs/requirements/non-functional-requirements.md`)
 
 ## Implemented (minimal)
 
