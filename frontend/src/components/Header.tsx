@@ -3,7 +3,7 @@
 
 export const NAV_AREAS: { label: string; href?: string }[] = [
   { label: "Chat" },
-  { label: "Search" },
+  { label: "Search", href: "/search" },
   { label: "Notices", href: "/notices" },
   { label: "Documents" },
   { label: "Faculty" },

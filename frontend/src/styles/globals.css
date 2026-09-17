@@ -114,3 +114,25 @@ main {
   color: #6b7280;
 }
 
+
+.result-list {
+  list-style: decimal;
+  padding-left: 1.5rem;
+}
+.result-item p {
+  margin: 0.25rem 0;
+}
+.result-source {
+  font-size: 0.85rem;
+  color: #0b3d2e;
+}
+form {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+form input {
+  flex: 1;
+  padding: 0.5rem;
+}
+

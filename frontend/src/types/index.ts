@@ -16,3 +16,13 @@ export interface Notice {
   category: string | null;
   published_at: string | null;
 }
+
+// Matches one item returned by GET /api/search on the backend.
+export interface SearchResult {
+  chunk_id: string;
+  document_id: string;
+  text: string;
+  source_url: string;
+  score: number;
+}
+

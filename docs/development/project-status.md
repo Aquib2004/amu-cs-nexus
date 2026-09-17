@@ -1,14 +1,14 @@
 ﻿# AMUCS Nexus - Project Status
 
-Current phase: Phase 8 - Embeddings (implemented; pgvector needs Postgres)
+Current phase: Phase 9 - Retrieval (implemented and tested)
 
-Completed: monorepo, env template, open-source docs, git (GitHub). Phases 1 (architecture+ADR-001), 0 (requirements draft), 3 (backend foundation), 4 (database models/repos/migrations+SQLite tests), 5 (frontend foundation), 6 (API integration: /api/notices + Notices page), 7 (ingestion pipeline: discover/crawl/parse/clean/metadata/chunk/index).
+Completed: Phases 1-8 (see prior entries). Phase 9 adds retrieval.
 
-## Phase 8 - embeddings (implemented + tested)
-- `ai`/ingestion `embedder.py`: Embedder interface, deterministic offline `HashEmbedder`, `ProviderEmbedder` stub.
-- Portable `VectorType` column: pgvector.vector on PostgreSQL, CSV text on SQLite for offline tests.
-- `Chunk.embedding` column + Alembic migration 0002 (verified: upgrade head -> 0002, column present).
-- Tests: ingestion 13 pass, backend 13 pass (incl. embedding round-trip on SQLite).
-- Real pgvector execution still requires a running PostgreSQL server (containerization, Phase 14).
+## Phase 9 - retrieval (implemented + tested)
+- `ai/retrieval/`: pure algorithms - scoring (cosine, reciprocal-rank fusion), keyword, semantic, hybrid.
+- Backend `app/services/search.py` + `api/search.py`: GET /api/search?q=&limit=&department=&document_type= with metadata filters.
+- Frontend `/search` page + `src/services/search.ts`; Header links to Search.
+- Tests: ai retrieval 5 pass; backend 16 pass (incl. search API on seeded SQLite). Live HTTP demo verified (q=vision -> source; q=no-match -> []).
+- Real pgvector `<=>` and production embeddings still need a running PostgreSQL server + provider credentials.
 
-Not implemented: Search/Chat/Documents/Faculty/Research endpoints+UI, retrieval (Phase 9), RAG, LLM, scheduler, running PostgreSQL server, LangChain/LangGraph/MCP, auth, deployment.
+Not implemented: Chat/Documents/Faculty/Research endpoints+UI, RAG (Phase 10), LLM, scheduler, running PostgreSQL server, LangChain/LangGraph/MCP, auth, deployment.
