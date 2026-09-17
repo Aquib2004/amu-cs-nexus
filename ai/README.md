@@ -1,8 +1,8 @@
-﻿# AMUCS Nexus - AI layer
+# AMUCS Nexus - AI layer
 
 The AI layer holds LLM, embeddings, retrieval, RAG, orchestration, tools, and evaluation code. It is intentionally separate from the backend so AI concerns do not blur into API/application logic.
 
-> STATUS: Structure only. No AI code exists yet. No LangChain, LangGraph, or MCP is added.
+> STATUS: Retrieval and RAG are implemented and tested. `ai/retrieval/` has keyword, semantic, hybrid (reciprocal-rank fusion) and cosine scoring. `ai/rag/` and `ai/prompts/` provide evidence building, citation validation, and a grounded extractive answerer used by `POST /api/chat`. No LLM/embedding provider client is wired yet (the extractive path needs no model and cannot fabricate claims). No LangChain, LangGraph, or MCP is added.
 
 ## Directory intent
 

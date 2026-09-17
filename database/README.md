@@ -31,3 +31,10 @@ A dedicated vector database (Pinecone, Qdrant, Weaviate) or Elasticsearch can be
 - `schemas` - initial SQL / data definitions (future).
 - `seeds` - seed data for development (future).
 - `scripts` - database helper scripts (future).
+
+## Migration status
+
+The SQLAlchemy models live in backend/app/models/ and the Alembic migrations in backend/alembic/ (revisions 0001 = documents/chunks/notices, 0002 = chunk embedding column). A scripts/seed_dev.py helper inserts clearly-labeled local sample data.
+
+**pgvector note:** on PostgreSQL the Chunk.embedding column should be a pgvector vector type backed by the pgvector extension. The current 0002 migration adds the column as VARCHAR so the SQLite dev path and tests work; a pgvector-aware migration (vector(384) plus a HNSW/IVFFlat index) must be applied when a real PostgreSQL + provider-embedding deployment is made. This is intentionally not faked before that deployment exists.
+

@@ -26,3 +26,17 @@ export interface SearchResult {
   score: number;
 }
 
+
+// Matches the response from POST /api/chat on the backend.
+export interface ChatSource {
+  number: number;
+  source_url: string;
+  document_id: string;
+  chunk_id: string;
+  text: string;
+}
+
+export interface ChatResponse {
+  answer: string;
+  sources: ChatSource[];
+}

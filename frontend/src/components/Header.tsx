@@ -1,8 +1,8 @@
-// Top navigation bar showing the planned AMUCS Nexus areas.
+// Top navigation bar showing the AMUCS Nexus areas.
 // Areas with an href are built pages; the rest are placeholders.
 
 export const NAV_AREAS: { label: string; href?: string }[] = [
-  { label: "Chat" },
+  { label: "Chat", href: "/chat" },
   { label: "Search", href: "/search" },
   { label: "Notices", href: "/notices" },
   { label: "Documents" },
@@ -25,7 +25,9 @@ export default function Header() {
                   {item.label}
                 </a>
               ) : (
-                <span className="nav-pending">{item.label}</span>
+                <span className="nav-pending" title="Not built yet">
+                  {item.label}
+                </span>
               )}
             </li>
           ))}

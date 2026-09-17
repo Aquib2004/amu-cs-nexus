@@ -1,6 +1,6 @@
-﻿# Search endpoint: GET /api/search?q=&limit=&department=&document_type=
+# Search endpoint: GET /api/search?q=&limit=&department=&document_type=
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
@@ -12,10 +12,10 @@ router = APIRouter(prefix="/search", tags=["search"])
 
 @router.get("", response_model=list[SearchResult])
 def search(
-    q: str,
-    limit: int = 10,
-    department: str | None = None,
-    document_type: str | None = None,
+    q: str = Query(..., min_length=1, max_length=300),
+    limit: int = Query(10, ge=1, le=50),
+    department: str | None = Query(None, max_length=200),
+    document_type: str | None = Query(None, max_length=200),
     db: Session = Depends(get_db),
 ) -> list[SearchResult]:
     return search_chunks(

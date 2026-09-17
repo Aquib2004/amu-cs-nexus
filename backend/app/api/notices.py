@@ -1,4 +1,4 @@
-﻿# Notices endpoints.
+# Notices endpoints.
 #
 # These demonstrate the full request path: HTTP request -> router ->
 # repository -> database -> response schema -> JSON response.
@@ -20,7 +20,7 @@ def list_notices(
     limit: int = 20,
     offset: int = 0,
     db: Session = Depends(get_db),
-) -> list[Notice]:
+) -> list[NoticeRead]:
     """Return recent notices, newest first."""
     return NoticeRepository(db).list_recent(limit=limit, offset=offset)
 
@@ -29,7 +29,7 @@ def list_notices(
 def get_notice(
     notice_id: UUID,
     db: Session = Depends(get_db),
-) -> Notice:
+) -> NoticeRead:
     """Return a single notice by id, or 404."""
     notice = NoticeRepository(db).get(notice_id)
     if notice is None:

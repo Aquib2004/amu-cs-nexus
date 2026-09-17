@@ -1,4 +1,4 @@
-﻿# Application configuration, loaded from environment variables.
+# Application configuration, loaded from environment variables.
 #
 # pydantic-settings reads values from the environment and from a local
 # `.env` file (which is git-ignored). Fields map to variable names by
@@ -22,6 +22,10 @@ class Settings(BaseSettings):
     embedding_provider: str | None = None
     embedding_api_key: str | None = None
     redis_url: str | None = None
+
+    # Comma-separated list of allowed browser origins for CORS. Kept as one
+    # string so it reads cleanly from an environment variable.
+    cors_origins: str = "http://localhost:3000"
 
 
 # A single, shared settings instance used across the application.
