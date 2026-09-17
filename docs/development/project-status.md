@@ -1,53 +1,14 @@
 ﻿# AMUCS Nexus - Project Status
 
-Project:
-AMUCS Nexus
+Current phase: Phase 8 - Embeddings (implemented; pgvector needs Postgres)
 
-Current phase:
-Phase 7 - Ingestion pipeline (implemented and tested)
+Completed: monorepo, env template, open-source docs, git (GitHub). Phases 1 (architecture+ADR-001), 0 (requirements draft), 3 (backend foundation), 4 (database models/repos/migrations+SQLite tests), 5 (frontend foundation), 6 (API integration: /api/notices + Notices page), 7 (ingestion pipeline: discover/crawl/parse/clean/metadata/chunk/index).
 
-## Completed
+## Phase 8 - embeddings (implemented + tested)
+- `ai`/ingestion `embedder.py`: Embedder interface, deterministic offline `HashEmbedder`, `ProviderEmbedder` stub.
+- Portable `VectorType` column: pgvector.vector on PostgreSQL, CSV text on SQLite for offline tests.
+- `Chunk.embedding` column + Alembic migration 0002 (verified: upgrade head -> 0002, column present).
+- Tests: ingestion 13 pass, backend 13 pass (incl. embedding round-trip on SQLite).
+- Real pgvector execution still requires a running PostgreSQL server (containerization, Phase 14).
 
-- project root and full monorepo structure
-- environment template and open-source documentation skeleton
-- Git repository (on GitHub)
-
-## Phase 1 - architecture documentation
-- component diagram, data flows, sequence diagrams, database architecture, API boundary, ingestion flow, RAG flow
-- ADR-001: modular monolith + PostgreSQL/pgvector
-
-## Phase 0 - requirements (DRAFT)
-- product / functional / non-functional requirements
-
-## Phase 3 / 4 - backend + database
-- FastAPI foundation, `/api/health`, settings, logging, error handling
-- SQLAlchemy models, repositories, Alembic migration, SQLite tests
-
-## Phase 5 / 6 - frontend + API integration
-- Next.js layout, typed API clients, health + notices pages
-- `/api/notices` endpoints; live end-to-end verified
-
-## Phase 7 - ingestion pipeline (implemented + tested)
-- URL discovery, crawler (fetch HTML), HTML parser, PDF parser, cleaner, metadata, chunker, indexer
-- 9 unit tests (processing + crawler/pdf) on sample/local content; no live AMU crawling
-- Backend integration test proves the indexer persists Document + chunks
-
-## Implemented to date
-- backend health + notices endpoints; database models/repositories/migrations; frontend foundation + notices page; ingestion processing pipeline + indexer
-
-## Not implemented
-- Embeddings and pgvector column (Phase 8)
-- Search, Chat, Documents, Faculty, Research UI + endpoints
-- Ingestion scheduler / scheduled runs
-- frontend tests
-- RAG
-- LLM integration
-- running PostgreSQL server (deferred to containerization)
-- LangChain / LangGraph / MCP
-- authentication
-- deployment
-
-## Version roadmap
-- V1: notices, documents, official pages, search, basic RAG, citations, chat.
-- V2: faculty, research, courses, metadata filtering, hybrid search, reranking, scheduled ingestion, document versioning, evaluation dashboard.
-- V3: LangGraph, tools, MCP, multi-step retrieval, advanced tool calling (only if justified).
+Not implemented: Search/Chat/Documents/Faculty/Research endpoints+UI, retrieval (Phase 9), RAG, LLM, scheduler, running PostgreSQL server, LangChain/LangGraph/MCP, auth, deployment.

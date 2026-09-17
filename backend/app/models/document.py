@@ -1,7 +1,6 @@
 ﻿# ORM models for documents and their text chunks.
 #
 # These mirror the planned tables in docs/database/database-architecture.md.
-# The pgvector embedding column will be added in the embeddings phase.
 
 import uuid
 from datetime import date, datetime, timezone
@@ -10,6 +9,7 @@ from sqlalchemy import JSON, Date, DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
+from app.models.vector import VectorType
 
 
 class Document(Base):
@@ -46,5 +46,6 @@ class Chunk(Base):
     text: Mapped[str] = mapped_column(Text)
     page_number: Mapped[int | None] = mapped_column(Integer)
     extra_metadata: Mapped[dict] = mapped_column(JSON, default=dict)
+    embedding: Mapped[list[float] | None] = mapped_column(VectorType(), nullable=True)
 
     document: Mapped[Document] = relationship(back_populates="chunks")
