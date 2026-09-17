@@ -43,3 +43,8 @@ flowchart LR
 - **Dedup and change detection** via content hash to avoid duplicate/outdated documents.
 - **Graceful failure:** a failed download or parse must not stop the whole batch.
 
+
+## Current implementation status
+
+As of Phase 7, the processing pipeline is implemented and unit-tested with sample/local content: URL discovery, crawler (fetch HTML), HTML and PDF parsing, cleaning, metadata, chunking, and an indexer that persists documents/chunks to the database. Embeddings (scheduled in Phase 8) and the scheduler are not implemented yet. We do NOT crawl live AMU sources during development or tests.
+
