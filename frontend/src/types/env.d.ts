@@ -1,4 +1,4 @@
-﻿// Custom environment variable types recognised by the frontend.
+// Custom environment variable types recognised by the frontend.
 
 declare namespace NodeJS {
   interface ProcessEnv {

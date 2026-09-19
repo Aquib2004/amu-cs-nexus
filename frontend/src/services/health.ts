@@ -1,4 +1,4 @@
-﻿// Health service: talks to the backend health endpoint.
+// Health service: talks to the backend health endpoint.
 //
 // This shows the client/server pattern: the browser (client) sends an HTTP
 // request to the FastAPI server and reads the JSON response.

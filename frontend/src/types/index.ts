@@ -1,4 +1,4 @@
-﻿// Shared TypeScript types used by the frontend.
+// Shared TypeScript types used by the frontend.
 
 // Matches the JSON returned by GET /api/health on the backend.
 export interface HealthResponse {
@@ -26,8 +26,7 @@ export interface SearchResult {
   score: number;
 }
 
-
-// Matches the response from POST /api/chat on the backend.
+// Matches the sources returned by POST /api/chat on the backend.
 export interface ChatSource {
   number: number;
   source_url: string;
@@ -36,6 +35,7 @@ export interface ChatSource {
   text: string;
 }
 
+// Matches the response from POST /api/chat on the backend.
 export interface ChatResponse {
   answer: string;
   sources: ChatSource[];

@@ -1,4 +1,4 @@
-﻿// Notices service: talks to the backend notices endpoint.
+// Notices service: talks to the backend notices endpoint.
 //
 // The browser (client) sends a GET to FastAPI, and we read the JSON list.
 

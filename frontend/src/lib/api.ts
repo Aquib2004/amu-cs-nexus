@@ -1,4 +1,4 @@
-﻿// Base configuration for the frontend API client.
+// Base configuration for the frontend API client.
 //
 // NEXT_PUBLIC_* environment variables are inlined at build time and can be
 // set in a local .env.local file. We default to the local backend URL.

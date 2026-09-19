@@ -5,9 +5,6 @@ import { useState } from "react";
 import { askQuestion } from "@/services/chat";
 import type { ChatResponse } from "@/types";
 
-const INSTRUCTIONS =
-  "Ask about indexed official AMU Computer Science information (notices, facilities, documents). Answers are grounded in retrieved sources.";
-
 export default function ChatPage() {
   const [question, setQuestion] = useState("");
   const [result, setResult] = useState<ChatResponse | null>(null);
@@ -33,7 +30,10 @@ export default function ChatPage() {
   return (
     <main>
       <h1>Chat</h1>
-      <p className="chat-hint">{INSTRUCTIONS}</p>
+      <p className="chat-hint">
+        Ask about indexed official AMU Computer Science information (notices,
+        facilities, documents). Answers are grounded in retrieved sources.
+      </p>
       <form onSubmit={onSubmit}>
         <label htmlFor="question">Ask a question</label>
         <input
@@ -44,12 +44,15 @@ export default function ChatPage() {
           placeholder="e.g. When was the MCA admission notice published?"
         />
         <button type="submit" disabled={loading}>
-          {loading ? "Thinking…" : "Ask"}
+          {loading ? "Thinkingâ€¦" : "Ask"}
         </button>
       </form>
 
       {error ? (
-        <p className="error">Could not reach the backend: {error}. Start it with `uvicorn app.main:app` in the backend folder.</p>
+        <p className="error">
+          Could not reach the backend: {error}. Start it with `uvicorn
+          app.main:app` in the backend folder.
+        </p>
       ) : result ? (
         <div className="chat-answer">
           <p>{result.answer}</p>
