@@ -160,3 +160,25 @@ form input {
 .source-item a {
   color: #0b3d2e;
 }
+.directory-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.directory-item {
+  padding: 0.5rem 0;
+}
+.directory-sub {
+  margin: 0.15rem 0;
+  font-size: 0.85rem;
+  color: #374151;
+}
+.exam-frame-wrap {
+  margin-top: 1rem;
+}
+.exam-frame-wrap iframe {
+  width: 100%;
+  height: 40rem;
+  border: 1px solid #d6dbe2;
+  border-radius: 6px;
+}

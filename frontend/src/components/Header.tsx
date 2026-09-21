@@ -5,9 +5,10 @@ export const NAV_AREAS: { label: string; href?: string }[] = [
   { label: "Chat", href: "/chat" },
   { label: "Search", href: "/search" },
   { label: "Notices", href: "/notices" },
-  { label: "Documents" },
-  { label: "Faculty" },
-  { label: "Research" },
+  { label: "Documents", href: "/documents" },
+  { label: "Faculty", href: "/faculty" },
+  { label: "Research", href: "/research" },
+  { label: "Exams", href: "/exams" },
 ];
 
 export default function Header() {

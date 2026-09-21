@@ -1,10 +1,13 @@
-﻿# Repository for documents: query and persist Document models.
+# Repository for documents: query and persist Document models.
 
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.models.document import Document
 from app.repositories.base import BaseRepository
+
+# document_type values treated as research output for the /api/research feed.
+_RESEARCH_TYPES = ("research", "publication")
 
 
 class DocumentRepository:
@@ -24,9 +27,25 @@ class DocumentRepository:
         stmt = select(func.count()).select_from(Document)
         return self.session.scalar(stmt) or 0
 
-    def list_all(self, limit: int = 50, offset: int = 0) -> list[Document]:
+    def list_all(
+        self,
+        limit: int = 50,
+        offset: int = 0,
+        document_type: str | None = None,
+        department: str | None = None,
+    ) -> list[Document]:
+        stmt = select(Document).order_by(Document.crawl_timestamp.desc())
+        if document_type:
+            stmt = stmt.where(Document.document_type == document_type)
+        if department:
+            stmt = stmt.where(Document.department == department)
+        stmt = stmt.limit(limit).offset(offset)
+        return list(self.session.scalars(stmt))
+
+    def list_research(self, limit: int = 20, offset: int = 0) -> list[Document]:
         stmt = (
             select(Document)
+            .where(Document.document_type.in_(_RESEARCH_TYPES))
             .order_by(Document.crawl_timestamp.desc())
             .limit(limit)
             .offset(offset)
