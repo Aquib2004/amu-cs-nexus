@@ -96,10 +96,13 @@ FACULTY = [
 
 
 def _seed_documents(session: Session) -> None:
-    if session.query(Document).count() > 0:
-        print("Documents already present; skipping.")
-        return
+    # Idempotent per document (so new dev docs get added on re-runs even when
+    # other documents already exist).
+    existing = {row.title for row in session.query(Document.title)}
+    added = 0
     for item in DOCUMENTS + RESEARCH_DOCUMENTS:
+        if item["title"] in existing:
+            continue
         doc = Document(
             title=item["title"],
             source_url=item["source_url"],
@@ -109,7 +112,8 @@ def _seed_documents(session: Session) -> None:
         )
         doc.chunks.append(Chunk(chunk_index=0, text=item["text"]))
         session.add(doc)
-    print(f"Seeded {len(DOCUMENTS) + len(RESEARCH_DOCUMENTS)} documents.")
+        added += 1
+    print(f"Seeded {added} new documents." if added else "All documents already present; skipping.")
 
 
 def _seed_notices(session: Session) -> None:
