@@ -18,6 +18,8 @@ class DocumentListItem(BaseModel):
     document_type: str | None
     department: str | None
     status: str
+    # The official page the document came from; lets the UI link straight to it.
+    source_url: str | None = None
 
 
 class ChunkRead(BaseModel):

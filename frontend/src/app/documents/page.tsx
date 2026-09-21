@@ -21,24 +21,35 @@ export default function DocumentsPage() {
 
   return (
     <main>
-      <h1>Documents</h1>
-      <p className="chat-hint">
-        Indexed documents and downloads. Source data is seeded locally for
-        development.
+      <h1 className="page-title">Documents</h1>
+      <p className="page-subtitle">
+        Indexed documents with links to the official source pages.
       </p>
       {error ? (
         <p className="error">Could not load documents: {error}</p>
       ) : loading ? (
-        <p>Loading documents…</p>
+        <p className="loading">Loading documents&hellip;</p>
       ) : docs.length === 0 ? (
-        <p>No documents indexed yet.</p>
+        <div className="empty-state">No documents indexed yet.</div>
       ) : (
-        <ul className="notice-list">
+        <ul className="item-list">
           {docs.map((d) => (
-            <li key={d.id} className="notice-item">
-              <strong>{d.title}</strong>
-              <span className="notice-meta">
-                {d.document_type ?? "document"} · {d.status}
+            <li key={d.id} className="item-card">
+              <h2 className="item-title">
+                {d.source_url ? (
+                  <a href={d.source_url} target="_blank" rel="noreferrer">
+                    {d.title}
+                  </a>
+                ) : (
+                  d.title
+                )}
+              </h2>
+              <div className="item-tags">
+                <span className="badge">{d.document_type ?? "document"}</span>
+                <span className="badge warm">{d.status}</span>
+              </div>
+              <span className="item-meta">
+                {d.source_type ?? "source"} · {d.department ?? "computer-science"}
               </span>
             </li>
           ))}

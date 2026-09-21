@@ -39,4 +39,8 @@ export interface ChatSource {
 export interface ChatResponse {
   answer: string;
   sources: ChatSource[];
+  // Which generator produced the answer: "gemini" or "extractive".
+  provider: string;
+  // Set when the answer had to be degraded (provider down, invalid citations).
+  notice: string | null;
 }

@@ -46,6 +46,33 @@ DOCUMENTS = [
         "text": "The computer vision laboratory contains 20 GPU workstations used for "
         "undergraduate and postgraduate research projects.",
     },
+    {
+        "title": "BCA/BSc Programme Syllabus",
+        "source_url": "https://www.amu.ac.in/department/computer-science/syllabus",
+        "department": "computer-science",
+        "source_type": "web",
+        "document_type": "syllabus",
+        "text": "Undergraduate Computer Science programmes cover programming, data "
+        "structures, algorithms, databases, operating systems, and computer networks.",
+    },
+    {
+        "title": "Department Laboratories and Facilities",
+        "source_url": "https://www.amu.ac.in/department/computer-science/facilities",
+        "department": "computer-science",
+        "source_type": "web",
+        "document_type": "facility",
+        "text": "The department maintains teaching and research laboratories for "
+        "programming, networking, and computer vision, along with library access.",
+    },
+    {
+        "title": "Admissions Information (official)",
+        "source_url": "https://www.amu.ac.in/admissions",
+        "department": "computer-science",
+        "source_type": "web",
+        "document_type": "admissions",
+        "text": "Admissions to Computer Science programmes are processed through the "
+        "official AMU online admissions portal.",
+    },
 ]
 
 RESEARCH_DOCUMENTS = [
@@ -92,6 +119,26 @@ FACULTY = [
         "research_areas": ["Deep Learning", "Medical Imaging"],
         "profile_url": "https://www.amu.ac.in/department/computer-science/faculty",
     },
+    {
+        "name": "Dr. M. Fahad",
+        "title": "Associate Professor",
+        "designation": "Faculty",
+        "department": "computer-science",
+        "email": "mfahad@amu.ac.in",
+        "specializations": ["Databases", "Distributed Systems"],
+        "research_areas": ["Big Data", "Database Systems"],
+        "profile_url": "https://www.amu.ac.in/department/computer-science/faculty",
+    },
+    {
+        "name": "Ms. N. Aziz",
+        "title": "Assistant Professor",
+        "designation": "Faculty",
+        "department": "computer-science",
+        "email": "naziz@amu.ac.in",
+        "specializations": ["Computer Networks", "Network Security"],
+        "research_areas": ["Network Protocols", "Security"],
+        "profile_url": "https://www.amu.ac.in/department/computer-science/faculty",
+    },
 ]
 
 
@@ -126,10 +173,12 @@ def _seed_notices(session: Session) -> None:
 
 
 def _seed_faculty(session: Session) -> None:
-    if session.query(Faculty).count() > 0:
-        print("Faculty already present; skipping.")
-        return
+    # Idempotent per name so new sample members are added on re-runs.
+    existing = {row.name for row in session.query(Faculty.name)}
+    added = 0
     for item in FACULTY:
+        if item["name"] in existing:
+            continue
         session.add(
             Faculty(
                 name=item["name"],
@@ -142,7 +191,8 @@ def _seed_faculty(session: Session) -> None:
                 profile_url=item["profile_url"],
             )
         )
-    print(f"Seeded {len(FACULTY)} faculty members.")
+        added += 1
+    print(f"Seeded {added} new faculty members." if added else "All faculty already present; skipping.")
 
 
 def main() -> None:

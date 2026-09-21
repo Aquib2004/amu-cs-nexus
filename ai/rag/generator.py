@@ -7,9 +7,15 @@
 
 import re
 from abc import ABC, abstractmethod
+from typing import TYPE_CHECKING
 
-from ai.prompts.rag_prompts import UNVERIFIED_ANSWER, build_user_prompt
+from ai.prompts.rag_prompts import SYSTEM_PROMPT, UNVERIFIED_ANSWER, build_user_prompt
 from ai.rag.context import Evidence, format_context
+
+# Imported for typing only: this module must not construct clients (credentials
+# belong to the app layer), so a real import at runtime is unnecessary here.
+if TYPE_CHECKING:  # pragma: no cover - typing-only branch
+    from ai.providers.gemini import GeminiClient
 
 _TOKEN_RE = re.compile(r"[a-z0-9]+")
 # Small stopword list so generic words don't drive sentence selection.
@@ -71,11 +77,20 @@ class ExtractiveAnswerer(AnswerGenerator):
         return " ".join(chosen)
 
 
-class ProviderAnswerer(AnswerGenerator):
-    """LLM-backed generator using SYSTEM_PROMPT + evidence. Needs credentials."""
+class GeminiAnswerer(AnswerGenerator):
+    """LLM-backed generator: SYSTEM_PROMPT + numbered evidence -> cited answer.
+
+    The client is injected rather than constructed here. That keeps this class
+    free of configuration/credential concerns and lets tests pass a fake client
+    that returns canned text (including misbehaving text).
+    """
+
+    def __init__(self, client: "GeminiClient") -> None:
+        self._client = client
 
     def generate(self, question: str, evidence: list[Evidence]) -> str:
-        # Assemble the prompt to show the intended shape, then refuse until a
-        # provider client exists. Prevents silently shipping an ungrounded path.
-        _ = build_user_prompt(question, format_context(evidence))
-        raise NotImplementedError("Provider LLM requires provider wiring + credentials")
+        user_prompt = build_user_prompt(question, format_context(evidence))
+        # Provider failures deliberately propagate: `services/chat.py` catches
+        # ProviderError and degrades to the extractive answer, so an outage
+        # never turns into a 500 for the user.
+        return self._client.generate(SYSTEM_PROMPT, user_prompt)

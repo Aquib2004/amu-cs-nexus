@@ -21,28 +21,46 @@ export default function FacultyPage() {
 
   return (
     <main>
-      <h1>Faculty</h1>
-      <p className="chat-hint">
-        Faculty directory for the Department of Computer Science. Source data
-        is seeded locally for development.
+      <h1 className="page-title">Faculty</h1>
+      <p className="page-subtitle">
+        Faculty directory for the Department of Computer Science.{" "}
+        <em>Development sample data</em> &mdash; not the official staff list.
       </p>
       {error ? (
         <p className="error">Could not load faculty: {error}</p>
       ) : loading ? (
-        <p>Loading faculty…</p>
+        <p className="loading">Loading faculty&hellip;</p>
       ) : members.length === 0 ? (
-        <p>No faculty records yet.</p>
+        <div className="empty-state">No faculty records yet.</div>
       ) : (
-        <ul className="directory-list">
+        <ul className="item-list">
           {members.map((m) => (
-            <li key={m.id} className="directory-item">
-              <strong>{m.name}</strong>
-              <span className="notice-meta">
+            <li key={m.id} className="item-card">
+              <h2 className="item-title">{m.name}</h2>
+              <span className="item-meta">
                 {m.title ?? m.designation ?? "Faculty"}
               </span>
-              <p className="directory-sub">
-                {m.specializations.join(", ")}
-              </p>
+              {Array.isArray(m.specializations) && m.specializations.length > 0 && (
+                <div className="item-tags">
+                  {m.specializations.map((s) => (
+                    <span key={s} className="badge">
+                      {s}
+                    </span>
+                  ))}
+                </div>
+              )}
+              {m.email && (
+                <span className="item-meta">
+                  <a href={`mailto:${m.email}`}>{m.email}</a>
+                </span>
+              )}
+              {m.profile_url && (
+                <div className="item-tags">
+                  <a href={m.profile_url} target="_blank" rel="noreferrer">
+                    Official profile
+                  </a>
+                </div>
+              )}
             </li>
           ))}
         </ul>

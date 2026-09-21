@@ -5,23 +5,39 @@ import { useState } from "react";
 import { askQuestion } from "@/services/chat";
 import type { ChatResponse } from "@/types";
 
+const SUGGESTIONS = [
+  "When was the MCA admission notice published?",
+  "What is in the computer vision laboratory?",
+  "Find a research publication",
+];
+
+interface ChatTurn {
+  role: "user" | "bot";
+  text: string;
+}
+
 export default function ChatPage() {
   const [question, setQuestion] = useState("");
-  const [result, setResult] = useState<ChatResponse | null>(null);
+  const [turns, setTurns] = useState<ChatTurn[]>([]);
+  const [sourceRefs, setSourceRefs] = useState<ChatResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  async function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    const q = question.trim();
-    if (!q || loading) return;
+  async function ask(q: string) {
+    const text = q.trim();
+    if (!text || loading) return;
     setError(null);
+    setQuestion("");
+    setTurns([...turns, { role: "user", text }]);
     setLoading(true);
+    setSourceRefs(null);
     try {
-      setResult(await askQuestion(q));
+      const result = await askQuestion(text);
+      setTurns([...turns, { role: "user", text }, { role: "bot", text: result.answer }]);
+      setSourceRefs(result);
     } catch (err: unknown) {
-      setResult(null);
-      setError(err instanceof Error ? err.message : "Unknown error");
+      const message = err instanceof Error ? err.message : "Unknown error";
+      setTurns([...turns, { role: "user", text }, { role: "bot", text: `Sorry, I hit an error: ${message}` }]);
     } finally {
       setLoading(false);
     }
@@ -29,49 +45,93 @@ export default function ChatPage() {
 
   return (
     <main>
-      <h1>Chat</h1>
-      <p className="chat-hint">
-        Ask about indexed official AMU Computer Science information (notices,
-        facilities, documents). Answers are grounded in retrieved sources.
-      </p>
-      <form onSubmit={onSubmit}>
-        <label htmlFor="question">Ask a question</label>
-        <input
-          id="question"
-          type="text"
-          value={question}
-          onChange={(e) => setQuestion(e.target.value)}
-          placeholder="e.g. When was the MCA admission notice published?"
-        />
-        <button type="submit" disabled={loading}>
-          {loading ? "Thinking…" : "Ask"}
-        </button>
-      </form>
+      <section className="chat-panel">
+        <div className="chat-head">
+          <div className="chat-identity">
+            <img src="/amu-logo.png" alt="" width={30} height={30} />
+            YouRobo
+            <span className="badge">
+              {sourceRefs?.provider === "gemini" ? "Gemini" : "Grounded"}
+            </span>
+          </div>
+          <p className="chat-status">
+            Answers are grounded in indexed official sources and cited with
+            numbers you can click.
+          </p>
+        </div>
 
-      {error ? (
-        <p className="error">
-          Could not reach the backend: {error}. Start it with `uvicorn
-          app.main:app` in the backend folder.
-        </p>
-      ) : result ? (
-        <div className="chat-answer">
-          <p>{result.answer}</p>
-          {result.sources.length > 0 && (
-            <ul className="source-list">
-              {result.sources.map((s) => (
-                <li key={s.number} className="source-item">
-                  <span>[{s.number}]</span>
+        <div className="chat-thread" aria-live="polite">
+          {turns.length === 0 && (
+            <p className="loading">
+              Ask a question below. Example: &ldquo;When was the MCA admission
+              notice published?&rdquo;
+            </p>
+          )}
+          {turns.map((t, i) => (
+            <div key={i} className={t.role === "user" ? "msg user" : "msg bot"}>
+              {t.text}
+            </div>
+          ))}
+          {loading && <div className="msg-typing">YouRobo is thinking…</div>}
+        </div>
+
+        {sourceRefs?.notice && (
+          <div className="notice-banner">{sourceRefs.notice}</div>
+        )}
+
+        {sourceRefs && sourceRefs.sources.length > 0 && (
+          <details className="sources-panel">
+            <summary>Sources ({sourceRefs.sources.length})</summary>
+            <ol>
+              {sourceRefs.sources.map((s) => (
+                <li key={s.number}>
                   <a href={s.source_url} target="_blank" rel="noreferrer">
                     {s.source_url}
                   </a>
                 </li>
               ))}
-            </ul>
-          )}
-        </div>
-      ) : (
-        <p>Ask a question above to see a source-grounded answer.</p>
-      )}
+            </ol>
+          </details>
+        )}
+
+        <form
+          className="field-row"
+          onSubmit={(e) => {
+            e.preventDefault();
+            ask(question);
+          }}
+        >
+          <label htmlFor="question">Ask a question</label>
+          <input
+            id="question"
+            type="text"
+            value={question}
+            onChange={(e) => setQuestion(e.target.value)}
+            placeholder="e.g. When was the MCA admission notice published?"
+            aria-label="Ask YouRobo a question"
+          />
+          <button type="submit" className="btn" disabled={loading}>
+            {loading ? "Thinking…" : "Ask"}
+          </button>
+        </form>
+
+        {turns.length === 0 && (
+          <div className="suggestions" role="group" aria-label="Suggested questions">
+            {SUGGESTIONS.map((s) => (
+              <button
+                key={s}
+                type="button"
+                className="suggestion-chip"
+                onClick={() => ask(s)}
+              >
+                {s}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {error && <p className="error">Could not reach the backend: {error}</p>}
+      </section>
     </main>
   );
 }

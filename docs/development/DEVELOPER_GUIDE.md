@@ -147,3 +147,21 @@ cd ai;        backend\.venv\Scripts\python.exe -m pytest tests -q   # 10 pass
 cd ingestion; .venv\Scripts\python.exe -m pytest tests -q           # 13 pass
 cd frontend; npx tsc --noEmit                          # 0 errors
 ```
+## 8. YouRobo (the AI chat assistant)
+
+- **YouRobo** is the name of the chat assistant (branded on the /chat page).
+- It uses a Gemini provider when configured, and an offline 'extractive' mode
+  otherwise. Both paths return the same response shape with numbered sources.
+- Enable Gemini by setting in the backend environment (.env or real env):
+
+      LLM_PROVIDER=gemini
+      LLM_API_KEY=...     # or GEMINI_API_KEY=... (alias supported)
+
+- How the provider is wired: i/providers/gemini.py (HTTP client with bounded
+  retries and typed errors) <- i/rag/generator.py (GeminiAnswerer) <-
+  pp/services/chat.py (chooses provider vs extractive, validates citations).
+- No key set? pp/services/chat.py logs INFO and degrades to the extractive
+  answerer, so the app keeps working on a fresh clone. Never commit a real key.
+- While no key is configured you may see the 
+otice field returned from
+  /api/chat indicating the extractive path. This is by design (no fabrication).

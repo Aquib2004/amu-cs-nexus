@@ -20,6 +20,7 @@ export interface DocumentListItem {
   document_type: string | null;
   department: string | null;
   status: string;
+  source_url: string | null;
 }
 
 export interface DocumentChunk {

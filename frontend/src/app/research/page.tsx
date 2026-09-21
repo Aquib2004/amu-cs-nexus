@@ -21,22 +21,32 @@ export default function ResearchPage() {
 
   return (
     <main>
-      <h1>Research</h1>
-      <p className="chat-hint">
+      <h1 className="page-title">Research</h1>
+      <p className="page-subtitle">
         Research and publications associated with the department.
       </p>
       {error ? (
         <p className="error">Could not load research: {error}</p>
       ) : loading ? (
-        <p>Loading research…</p>
+        <p className="loading">Loading research&hellip;</p>
       ) : items.length === 0 ? (
-        <p>No research records indexed yet.</p>
+        <div className="empty-state">No research records indexed yet.</div>
       ) : (
-        <ul className="notice-list">
+        <ul className="item-list">
           {items.map((d) => (
-            <li key={d.id} className="notice-item">
-              <strong>{d.title}</strong>
-              <span className="notice-meta">{d.document_type}</span>
+            <li key={d.id} className="item-card">
+              <h2 className="item-title">
+                {d.source_url ? (
+                  <a href={d.source_url} target="_blank" rel="noreferrer">
+                    {d.title}
+                  </a>
+                ) : (
+                  d.title
+                )}
+              </h2>
+              <div className="item-tags">
+                <span className="badge">{d.document_type ?? "publication"}</span>
+              </div>
             </li>
           ))}
         </ul>

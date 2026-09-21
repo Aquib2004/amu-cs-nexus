@@ -21,23 +21,29 @@ export default function NoticesPage() {
 
   return (
     <main>
-      <h1>Notices</h1>
+      <h1 className="page-title">Notices</h1>
+      <p className="page-subtitle">
+        Department notices and announcements (development sample data).
+      </p>
       {error ? (
         <p className="error">Could not load notices: {error}</p>
       ) : loading ? (
-        <p>Loading notices&hellip;</p>
+        <p className="loading">Loading notices&hellip;</p>
       ) : notices.length === 0 ? (
-        <p>No notices yet.</p>
+        <div className="empty-state">No notices yet.</div>
       ) : (
-        <ul className="notice-list">
+        <ul className="item-list">
           {notices.map((n) => (
-            <li key={n.id} className="notice-item">
-              <a href={n.url} target="_blank" rel="noreferrer">
-                {n.title}
-              </a>
-              <span className="notice-meta">
-                {n.category ?? "general"} &middot; {n.published_at ?? "unknown date"}
-              </span>
+            <li key={n.id} className="item-card">
+              <h2 className="item-title">
+                <a href={n.url} target="_blank" rel="noreferrer">
+                  {n.title}
+                </a>
+              </h2>
+              <div className="item-tags">
+                <span className="badge">{n.category ?? "general"}</span>
+                <span className="badge warm">{n.published_at ?? "date unknown"}</span>
+              </div>
             </li>
           ))}
         </ul>

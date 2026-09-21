@@ -9,6 +9,7 @@ export default function SearchPage() {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
 
   async function onSearch() {
@@ -16,17 +17,24 @@ export default function SearchPage() {
     if (!q) return;
     setError(null);
     setSearched(true);
+    setLoading(true);
     try {
       setResults(await search({ q, limit: 20 }));
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Unknown error");
+    } finally {
+      setLoading(false);
     }
   }
 
   return (
     <main>
-      <h1>Search</h1>
+      <h1 className="page-title">Search</h1>
+      <p className="page-subtitle">
+        Keyword, semantic and hybrid search over indexed content.
+      </p>
       <form
+        className="field-row"
         onSubmit={(e) => {
           e.preventDefault();
           onSearch();
@@ -39,14 +47,19 @@ export default function SearchPage() {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="e.g. computer vision"
+          aria-label="Search query"
         />
-        <button type="submit">Search</button>
+        <button type="submit" className="btn" disabled={loading}>
+          {loading ? "Searching…" : "Search"}
+        </button>
       </form>
 
       {error ? (
         <p className="error">{error}</p>
+      ) : loading ? (
+        <p className="loading">Searching&hellip;</p>
       ) : searched && results.length === 0 ? (
-        <p>No matching results.</p>
+        <div className="empty-state">No matching results.</div>
       ) : (
         <ol className="result-list">
           {results.map((r) => (
@@ -60,6 +73,7 @@ export default function SearchPage() {
               >
                 Source
               </a>
+              <span className="result-score">score {r.score.toFixed(4)}</span>
             </li>
           ))}
         </ol>

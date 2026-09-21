@@ -8,7 +8,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))  # repo root -> imp
 from ai.prompts.rag_prompts import UNVERIFIED_ANSWER, build_user_prompt  # noqa: E402
 from ai.rag.citations import citations_are_valid, extract_citations  # noqa: E402
 from ai.rag.context import build_evidence, format_context  # noqa: E402
-from ai.rag.generator import ExtractiveAnswerer, ProviderAnswerer  # noqa: E402
+from ai.rag.generator import ExtractiveAnswerer, GeminiAnswerer  # noqa: E402
+from ai.providers.gemini import GeminiClient  # noqa: E402
 
 
 class _FakeResult:
@@ -56,10 +57,43 @@ def test_extractive_answerer_admits_gap() -> None:
     assert answer == UNVERIFIED_ANSWER
 
 
-def test_provider_answerer_requires_wiring() -> None:
+class _FakeGeminiClient:
+    """Stand-in for GeminiClient so no network/credentials are needed.
+
+    `GeminiAnswerer` takes its client by injection precisely so this is possible.
+    """
+
+    def __init__(self, reply: str = "Answer [1]") -> None:
+        self.reply = reply
+        self.calls: list[tuple[str, str]] = []
+
+    def generate(self, system_prompt: str, user_prompt: str) -> str:
+        self.calls.append((system_prompt, user_prompt))
+        return self.reply
+
+
+def test_gemini_answerer_sends_system_prompt_and_evidence() -> None:
+    client = _FakeGeminiClient()
+    answer = GeminiAnswerer(client).generate("admission notice date", _evidence())
+
+    assert answer == "Answer [1]"
+    system_prompt, user_prompt = client.calls[0]
+    # The persona/guardrails prompt must reach the model, not be dropped.
+    assert "AMU" in system_prompt or "source" in system_prompt.lower()
+    # The user turn must carry the question and the numbered evidence block.
+    assert "admission notice date" in user_prompt
+    assert "[1]" in user_prompt
+
+
+def test_gemini_answerer_exposes_gemini_contract() -> None:
+    """The client is injectable AND the real contract is importable for wiring."""
+    assert hasattr(GeminiClient, "generate")
+
+
+def test_gemini_client_requires_api_key() -> None:
     import pytest
 
-    with pytest.raises(NotImplementedError):
-        ProviderAnswerer().generate("q", _evidence())
-    # The prompt builder used by the provider path is also covered.
-    assert "Question:" in build_user_prompt("q", "evidence")
+    from ai.providers.gemini import ProviderError
+
+    with pytest.raises(ProviderError):
+        GeminiClient(api_key="").generate("system", "user")
