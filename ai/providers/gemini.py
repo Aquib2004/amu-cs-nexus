@@ -100,7 +100,7 @@ class GeminiClient:
     def __init__(
         self,
         api_key: str,
-        model: str = "gemini-2.0-flash",
+        model: str = "gemini-3.6-flash",
         timeout: float = 20.0,
         max_retries: int = 2,
         transport: httpx.BaseTransport | None = None,
