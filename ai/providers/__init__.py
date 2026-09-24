@@ -11,9 +11,10 @@ from ai.providers.errors import (
     ProviderUnavailable,
 )
 from ai.providers.gemini import GeminiClient
-from ai.providers.groq import GroqClient
+from ai.providers.groq import DEFAULT_MODEL, GroqClient
 
 __all__ = [
+    "DEFAULT_MODEL",
     "GeminiClient",
     "GroqClient",
     "ProviderError",

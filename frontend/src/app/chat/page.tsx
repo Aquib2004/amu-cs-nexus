@@ -54,7 +54,7 @@ export default function ChatPage() {
               {sourceRefs?.provider === "gemini"
                 ? "Gemini"
                 : sourceRefs?.provider === "groq"
-                  ? "Groq (70B)"
+                  ? "Groq (120B)"
                   : "Grounded"}
             </span>
           </div>

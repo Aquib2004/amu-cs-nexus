@@ -11,6 +11,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from ai.providers import (  # noqa: E402
+    DEFAULT_MODEL,
     GroqClient,
     ProviderAuthError,
     ProviderError,
@@ -34,6 +35,22 @@ def _client(status: int, payload: dict | None = None) -> GroqClient:
 def test_missing_key_raises() -> None:
     with pytest.raises(ProviderAuthError):
         GroqClient(api_key="")
+
+
+def test_default_model_is_sent_in_request_body() -> None:
+    captured: dict = {}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        captured["body"] = request.content.decode()
+        return httpx.Response(200, json={"choices": [{"message": {"content": "ok [1]"}}]})
+
+    client = GroqClient(
+        api_key="gsk_test123",
+        max_retries=0,
+        transport=httpx.MockTransport(handler),
+    )
+    client.generate("s", "u")
+    assert f'"model":"{DEFAULT_MODEL}"' in captured["body"]
 
 
 def test_generate_returns_assistant_text() -> None:

@@ -1,7 +1,7 @@
 # ai/providers/groq.py - Groq (OpenAI-compatible chat completions) provider.
 #
 # Why: free-tier Groq gives an extremely fast, high-quality hosted model
-# (default: llama-3.3-70b-versatile) through the OpenAI-compatible endpoint.
+# (default: openai/gpt-oss-120b) through the OpenAI-compatible endpoint.
 #
 # Security invariant (same as Gemini): the API key travels ONLY in the
 # Authorization header, never in the URL or query string.
@@ -17,7 +17,7 @@ from typing import Any
 import httpx
 
 GROQ_ENDPOINT = "https://api.groq.com/openai/v1/chat/completions"
-DEFAULT_MODEL = "llama-3.3-70b-versatile"
+DEFAULT_MODEL = "openai/gpt-oss-120b"
 
 # Statuses where retrying can actually help (transient overload / mid-flight).
 _RETRYABLE_STATUS_CODES = {408, 429, 500, 502, 503, 504}
