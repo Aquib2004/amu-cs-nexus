@@ -33,20 +33,18 @@ RETRYABLE_STATUS_CODES = {429, 500, 502, 503, 504}
 MAX_BACKOFF_SECONDS = 8.0
 
 
-class ProviderError(RuntimeError):
-    """Base class for all model-provider failures raised by this module."""
+# Shared, typed provider errors (same classes for every vendor so callers can
+# apply one degrade policy). They are re-exported here so existing imports of
+# `ai.providers.gemini.ProviderError` keep working.
+from ai.providers.errors import (  # noqa: F401
+    ProviderAuthError,
+    ProviderError,
+    ProviderRateLimited,
+    ProviderUnavailable,
+)
 
-
-class ProviderAuthError(ProviderError):
-    """The API key is missing, invalid, or lacks permission (401/403)."""
-
-
-class ProviderRateLimited(ProviderError):
-    """The provider asked us to slow down (HTTP 429)."""
-
-
-class ProviderUnavailable(ProviderError):
-    """The provider failed server-side or was unreachable (5xx / network)."""
+RETRYABLE_STATUS_CODES = {429, 500, 502, 503, 504}
+MAX_BACKOFF_SECONDS = 8.0
 
 
 def _backoff_delay(attempt: int, retry_after: float | None) -> float:

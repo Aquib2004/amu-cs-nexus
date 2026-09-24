@@ -51,7 +51,11 @@ export default function ChatPage() {
             <img src="/amu-logo.png" alt="" width={30} height={30} />
             YouRobo
             <span className="badge">
-              {sourceRefs?.provider === "gemini" ? "Gemini" : "Grounded"}
+              {sourceRefs?.provider === "gemini"
+                ? "Gemini"
+                : sourceRefs?.provider === "groq"
+                  ? "Groq (70B)"
+                  : "Grounded"}
             </span>
           </div>
           <p className="chat-status">

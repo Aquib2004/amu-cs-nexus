@@ -4,16 +4,18 @@
 # (ai/providers) change for different reasons: swapping the model vendor must
 # not touch retrieval, and credentials must live in exactly one place.
 
-from ai.providers.gemini import (
-    GeminiClient,
+from ai.providers.errors import (
     ProviderAuthError,
     ProviderError,
     ProviderRateLimited,
     ProviderUnavailable,
 )
+from ai.providers.gemini import GeminiClient
+from ai.providers.groq import GroqClient
 
 __all__ = [
     "GeminiClient",
+    "GroqClient",
     "ProviderError",
     "ProviderRateLimited",
     "ProviderAuthError",

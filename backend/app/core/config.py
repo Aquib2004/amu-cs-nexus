@@ -26,6 +26,9 @@ class Settings(BaseSettings):
     # Alias used by the older AMU.ai chatbot and by Google's docs. We accept it
     # so an existing GEMINI_API_KEY works without renaming anything.
     gemini_api_key: str | None = None
+    # Groq (free tier) alternative: LLM_PROVIDER=groq + GROQ_API_KEY.
+    groq_api_key: str | None = None
+    groq_model: str = "llama-3.3-70b-versatile"
     llm_model: str = "gemini-3.6-flash"
     # How long a single provider call may take, and how many EXTRA attempts we
     # make after it fails. Both are bounded on purpose: an unbounded retry loop
