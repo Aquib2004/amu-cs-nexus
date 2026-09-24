@@ -23,8 +23,8 @@ export default function FacultyPage() {
     <main>
       <h1 className="page-title">Faculty</h1>
       <p className="page-subtitle">
-        Faculty directory for the Department of Computer Science.{" "}
-        <em>Development sample data</em> &mdash; not the official staff list.
+        Faculty directory for the Department of Computer Science, loaded from
+        the official AMU site.
       </p>
       {error ? (
         <p className="error">Could not load faculty: {error}</p>
@@ -36,10 +36,20 @@ export default function FacultyPage() {
         <ul className="item-list">
           {members.map((m) => (
             <li key={m.id} className="item-card">
+              {m.image_url && (
+                <img
+                  className="faculty-photo"
+                  src={m.image_url}
+                  alt={`Photo of ${m.name}`}
+                  loading="lazy"
+                />
+              )}
               <h2 className="item-title">{m.name}</h2>
-              <span className="item-meta">
-                {m.title ?? m.designation ?? "Faculty"}
-              </span>
+              <div className="item-tags">
+                <span className="badge">
+                  {m.designation ?? m.title ?? "Faculty"}
+                </span>
+              </div>
               {Array.isArray(m.specializations) && m.specializations.length > 0 && (
                 <div className="item-tags">
                   {m.specializations.map((s) => (
@@ -50,16 +60,15 @@ export default function FacultyPage() {
                 </div>
               )}
               {m.email && (
-                <span className="item-meta">
+                <p className="item-meta">
                   <a href={`mailto:${m.email}`}>{m.email}</a>
-                </span>
+                </p>
               )}
+              {m.phone && <p className="item-meta">{m.phone}</p>}
               {m.profile_url && (
-                <div className="item-tags">
-                  <a href={m.profile_url} target="_blank" rel="noreferrer">
-                    Official profile
-                  </a>
-                </div>
+                <a href={m.profile_url} target="_blank" rel="noreferrer">
+                  Official profile
+                </a>
               )}
             </li>
           ))}

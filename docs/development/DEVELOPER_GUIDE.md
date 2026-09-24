@@ -165,3 +165,28 @@ cd frontend; npx tsc --noEmit                          # 0 errors
 - While no key is configured you may see the 
 otice field returned from
   /api/chat indicating the extractive path. This is by design (no fabrication).
+## Real (live) data ingestion
+
+The database holds real AMU data, not samples, since the real-ingestion work:
+
+- `scripts/ingest_real.py` removes any leftover sample rows, then calls
+  `ingestion/app/amu_ingest.py`, which crawls the official AMU department API
+  (`https://api.amu.ac.in/api/v1/department-list-data?...`) and upserts:
+  notices (paginated, ~160), faculty (18), non-teaching staff (12), programmes
+  (5), laboratories, research projects, plus an embedded search/RAG corpus.
+- Every crawl writes an `ingestion_log` row (source, rows found/written, status).
+- Real embeddings: when `LLM_API_KEY` / `GEMINI_API_KEY` is set, new chunks are
+  embedded with `gemini-embedding-2` (3072 dims, free tier) via
+  `ai/providers/gemini_embed.py` (key in header only). Without a key, chunks are
+  stored un-embedded and search falls back to the deterministic hash embedder.
+- Want to re-pull fresh AMU data?
+
+  ```
+  cd backend
+  .\.venv\Scripts\python.exe -m alembic upgrade head
+  .\.venv\Scripts\python.exe ..\scripts\ingest_real.py
+  ```
+
+- New directory tables + endpoints: `programs`, `laboratories`,
+  `research_projects`, `staff_members` (migration 0004) served at
+  `/api/programs`, `/api/laboratories`, `/api/research-projects`, `/api/staff`.

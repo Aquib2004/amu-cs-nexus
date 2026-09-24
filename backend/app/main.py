@@ -7,9 +7,13 @@ from app.api.chat import router as chat_router
 from app.api.documents import router as documents_router
 from app.api.faculty import router as faculty_router
 from app.api.health import router as health_router
+from app.api.laboratories import router as laboratories_router
 from app.api.notices import router as notices_router
+from app.api.programs import router as programs_router
 from app.api.research import router as research_router
+from app.api.research_projects import router as research_projects_router
 from app.api.search import router as search_router
+from app.api.staff import router as staff_router
 from app.core.config import settings
 from app.core.errors import register_error_handlers
 from app.core.logging import setup_logging
@@ -36,5 +40,9 @@ app.include_router(chat_router, prefix="/api")
 app.include_router(documents_router, prefix="/api")
 app.include_router(faculty_router, prefix="/api")
 app.include_router(research_router, prefix="/api")
+app.include_router(programs_router, prefix="/api")
+app.include_router(laboratories_router, prefix="/api")
+app.include_router(research_projects_router, prefix="/api")
+app.include_router(staff_router, prefix="/api")
 
 register_error_handlers(app)

@@ -326,6 +326,15 @@ main {
   border-color: #c9d6c5;
 }
 
+.faculty-photo {
+  width: 56px;
+  height: 56px;
+  object-fit: cover;
+  border-radius: 50%;
+  border: 2px solid var(--line);
+  margin-bottom: 0.4rem;
+}
+
 .item-card .item-title {
   font-weight: 650;
   margin: 0 0 0.35rem;

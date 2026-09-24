@@ -11,7 +11,10 @@ export const NAV_AREAS: { label: string; href: string; title: string }[] = [
   { label: "Notices", href: "/notices", title: "Department notices" },
   { label: "Documents", href: "/documents", title: "Document library" },
   { label: "Faculty", href: "/faculty", title: "Faculty directory" },
-  { label: "Research", href: "/research", title: "Research and publications" },
+  { label: "Programmes", href: "/programs", title: "Degrees offered by the department" },
+  { label: "Laboratories", href: "/laboratories", title: "Department laboratories" },
+  { label: "Research", href: "/research", title: "Research projects" },
+  { label: "Staff", href: "/staff", title: "Non-teaching staff" },
   { label: "Exams", href: "/exams", title: "Controller of Examinations" },
 ];
 

@@ -25,3 +25,5 @@ class Faculty(Base):
     specializations: Mapped[list[str]] = mapped_column(JSON, default=list)
     research_areas: Mapped[list[str]] = mapped_column(JSON, default=list)
     profile_url: Mapped[str | None] = mapped_column(String(1000))
+    image_url: Mapped[str | None] = mapped_column(String(1000))
+    source_url: Mapped[str] = mapped_column(String(1000), default="")

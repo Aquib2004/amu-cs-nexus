@@ -1,10 +1,10 @@
 #!/usr/bin/env python
-# scripts/seed_dev.py - DEV-ONLY sample data for local development.
+# scripts/seed_dev.py - LEGACY DEV-ONLY sample data (superseded).
 #
-# Inserts clearly-labeled example documents/chunks, notices, and faculty so the
-# local app has something to search, browse, and ask about. Never run against a
-# production database. Run from the backend/ directory after migrations:
-#   .\.venv\Scripts\python.exe -m alembic upgrade head
+# The project now ingests REAL data from the official AMU department API via
+# scripts/ingest_real.py (18 faculty, 160 notices, programmes, labs, research).
+# This file is kept for local smoke-testing without network access; it inserts
+# clearly-labeled example rows only. Run from the backend/ directory:
 #   .\.venv\Scripts\python.exe ..\scripts\seed_dev.py
 
 from __future__ import annotations

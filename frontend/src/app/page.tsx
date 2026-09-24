@@ -32,9 +32,24 @@ const FEATURES: { title: string; href: string; blurb: string }[] = [
     blurb: "Faculty directory for the Department of Computer Science.",
   },
   {
+    title: "Programmes",
+    href: "/programs",
+    blurb: "Degrees offered by the department (ug, postgraduate, PhD).",
+  },
+  {
+    title: "Laboratories",
+    href: "/laboratories",
+    blurb: "Teaching and research laboratories of the department.",
+  },
+  {
     title: "Research",
     href: "/research",
-    blurb: "Research publications and project areas.",
+    blurb: "Research projects with funding agencies and investigators.",
+  },
+  {
+    title: "Staff",
+    href: "/staff",
+    blurb: "Non-teaching staff directory.",
   },
   {
     title: "Exams",

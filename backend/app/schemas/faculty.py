@@ -20,3 +20,5 @@ class FacultyRead(BaseModel):
     specializations: list[str]
     research_areas: list[str]
     profile_url: str | None
+    image_url: str | None
+    source_url: str

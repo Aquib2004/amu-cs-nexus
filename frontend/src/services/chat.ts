@@ -7,7 +7,7 @@ export async function askQuestion(question: string): Promise<ChatResponse> {
   const response = await fetch(`${API_BASE_URL}/api/chat`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ question, limit: 5 }),
+    body: JSON.stringify({ question, limit: 8 }),
   });
 
   if (!response.ok) {

@@ -1,4 +1,11 @@
-﻿# services/search.py - search chunks using keyword + semantic + hybrid.
+# services/search.py - search chunks using keyword + semantic + hybrid.
+#
+# Semantic side:
+#   - When a Gemini key is configured, the query is embedded with the same
+#     model used at ingestion (gemini-embedding-2, 3072 dims) and matched
+#     against the stored chunk embeddings -> real semantic search.
+#   - Without a key (or on provider failure) we fall back to the deterministic
+#     hash embedder (384 dims), recomputing per-chunk so dimensions always match.
 
 import math
 import zlib
@@ -8,14 +15,17 @@ from sqlalchemy.orm import Session
 
 from ai.retrieval import hybrid as hybrid_alg
 from ai.retrieval import keyword as keyword_alg
-from ai.retrieval import semantic as semantic_alg
+from ai.retrieval.scoring import cosine_similarity
 
+from app.core.config import settings
 from app.models.document import Chunk, Document
 from app.schemas.search import SearchResult
 
 # Development/test deterministic embedder matching ingestion HashEmbedder(384).
 _DIMS = 384
 _SEM_EPSILON = 0.001
+
+_log = __import__("logging").getLogger(__name__)
 
 
 def _hash_query_vector(text: str) -> list[float]:
@@ -25,6 +35,20 @@ def _hash_query_vector(text: str) -> list[float]:
         vector[h % _DIMS] += 1.0
     norm = math.sqrt(sum(v * v for v in vector)) or 1.0
     return [v / norm for v in vector]
+
+
+def _real_query_vector(text: str) -> list[float] | None:
+    """Embed the query with the production embedder when configured."""
+    key = settings.llm_api_key or settings.gemini_api_key
+    if not key:
+        return None
+    try:
+        from ai.providers.gemini_embed import GeminiEmbedder
+
+        return GeminiEmbedder(api_key=key).embed(text)
+    except Exception as exc:  # provider outage must not break search
+        _log.warning("real query embedding unavailable, using hash: %s", exc)
+        return None
 
 
 def _apply_filters(stmt, department: str | None, document_type: str | None):
@@ -42,12 +66,11 @@ def search_chunks(
     department: str | None = None,
     document_type: str | None = None,
 ) -> list[SearchResult]:
-    candidate_limit = max(limit * 4, 40)
+    # The corpus is small right now (a few hundred chunks), so score every
+    # chunk; no candidate truncation, otherwise recent notice docs would crowd
+    # out labs/programmes/about content from retrieval entirely.
     stmt = (
-        select(Chunk, Document)
-        .join(Document, Chunk.document_id == Document.id)
-        .order_by(Document.crawl_timestamp.desc())
-        .limit(candidate_limit)
+        select(Chunk, Document).join(Document, Chunk.document_id == Document.id)
     )
     stmt = _apply_filters(stmt, department, document_type)
     rows = list(session.execute(stmt))
@@ -57,20 +80,28 @@ def search_chunks(
         return []
 
     key_ranking = keyword_alg.rank_keyword(query, items)
-    query_vec = _hash_query_vector(query)
-    vec_items = [(str(r.Chunk.id), r.Chunk.embedding or []) for r in rows]
-    sem_ranking = semantic_alg.rank_semantic(query_vec, vec_items)
+    relevant = {rid for rid, score in key_ranking if score > 0.0}
 
-    # Keep only chunks with some real relevance (keyword hit or semantic signal).
-    relevant = {
-        rid for rid, score in key_ranking if score > 0.0
-    } | {
-        rid for rid, score in sem_ranking if score > _SEM_EPSILON
-    }
+    # --- semantic: real query vector (dims match stored) or hash-per-chunk ---
+    query_real = _real_query_vector(query)
+    query_hash = _hash_query_vector(query)
+    sem_scored: list[tuple[str, float]] = []
+    for r in rows:
+        chunk = r.Chunk
+        stored = chunk.embedding or []
+        if query_real is not None and stored and len(stored) == len(query_real):
+            score = cosine_similarity(query_real, stored)
+        else:
+            score = cosine_similarity(query_hash, _hash_query_vector(chunk.text))
+        sem_scored.append((str(chunk.id), score))
+        if score > _SEM_EPSILON:
+            relevant.add(str(chunk.id))
+    sem_scored.sort(key=lambda pair: pair[1], reverse=True)
+
     if not relevant:
         return []
 
-    fused = hybrid_alg.rank_hybrid(key_ranking, sem_ranking)
+    fused = hybrid_alg.rank_hybrid(key_ranking, sem_scored)
     by_id = {str(r.Chunk.id): (r.Chunk, r.Document) for r in rows}
 
     results: list[SearchResult] = []
