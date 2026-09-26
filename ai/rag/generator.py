@@ -2,8 +2,9 @@
 #
 # Two implementations of one interface:
 # - ExtractiveAnswerer: offline, composes the answer ONLY from evidence
-#   sentences (no model, nothing can be fabricated). Used now for dev/tests.
-# - ProviderAnswerer: real LLM, needs provider credentials (later phase).
+#   sentences (no model, nothing can be fabricated).
+# - GeminiAnswerer: provider-backed generation, with the citation gate and
+#   extractive fallback applied by the backend service.
 
 import re
 from abc import ABC, abstractmethod
@@ -18,6 +19,10 @@ if TYPE_CHECKING:  # pragma: no cover - typing-only branch
     from ai.providers.gemini import GeminiClient
 
 _TOKEN_RE = re.compile(r"[a-z0-9]+")
+_BROAD_LIST_NOUNS = {
+    "laboratories", "labs", "laboratory", "exams", "examinations", "exam",
+    "staff", "programmes", "programs", "courses", "projects", "faculty",
+}
 # Small stopword list so generic words don't drive sentence selection.
 _STOPWORDS = {
     "the", "a", "an", "is", "are", "was", "were", "of", "for", "to", "in",
@@ -62,6 +67,13 @@ class ExtractiveAnswerer(AnswerGenerator):
         # Best overlap first; on ties prefer earlier evidence (higher-ranked).
         scored.sort(key=lambda entry: (-entry[0], entry[1]))
         if not scored:
+            # Broad list questions (for example, "what are the laboratories?")
+            # can have authoritative rows whose wording does not repeat the
+            # question. Quote the top evidence instead of claiming a gap.
+            broad_list = bool(set(_TOKEN_RE.findall(question.lower())) & _BROAD_LIST_NOUNS)
+            if evidence and broad_list:
+                first = evidence[0].text.strip().replace("\n", " ")
+                return f"{first[:600]} [{evidence[0].number}]"
             return UNVERIFIED_ANSWER
 
         chosen: list[str] = []

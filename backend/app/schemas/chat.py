@@ -16,6 +16,10 @@ class ChatRequest(BaseModel):
     question: str = Field(..., min_length=1, max_length=500)
     # More evidence = better LLM answers. 8 works well with free-tier tokens.
     limit: int = Field(default=8, ge=1, le=20)
+    # When present, this question is answered ONLY from the selected private
+    # upload. The token is required and never persisted in browser storage.
+    upload_id: UUID | None = None
+    upload_token: str | None = Field(default=None, min_length=20, max_length=200)
 
 
 class SourceRef(BaseModel):
@@ -26,6 +30,8 @@ class SourceRef(BaseModel):
     document_id: UUID
     chunk_id: UUID
     text: str
+    title: str = "Source"
+    source_type: str = "official"
 
 
 class ChatResponse(BaseModel):

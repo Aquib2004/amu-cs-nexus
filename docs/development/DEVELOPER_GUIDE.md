@@ -41,7 +41,7 @@ Browser (:3000) --HTTPS--> Next.js page (client component)
         -> repository (app/repositories/*.py) -> SQLAlchemy -> SQLite (dev)
         -> Pydantic schema (app/schemas/*.py) -> JSON response
 Chunks/text go through ai/retrieval (keyword+semantic+hybrid) and for /api/chat
-through ai/rag (evidence -> extractive answer -> cited sources).
+through ai/rag (intent-routed evidence -> provider or extractive answer -> cited sources).
 ```
 
 ### Verified endpoints
@@ -54,6 +54,10 @@ through ai/rag (evidence -> extractive answer -> cited sources).
 | GET | /api/documents, /api/documents/{id} | documents list / detail |
 | GET | /api/faculty, /api/faculty/{id} | faculty directory |
 | GET | /api/research | research/publication documents |
+| GET | /api/programs, /api/laboratories, /api/research-projects, /api/staff, /api/exams | real directory data |
+| POST | /api/chat/uploads | private file upload; returns a one-time token |
+| DELETE | /api/chat/uploads/{upload_id} | delete private file text |
+| GET | /api/notifications/vapid-public-key | opt-in notification configuration |
 
 All responses are JSON; errors are JSON (`{"detail": ...}`). Validation uses
 FastAPI/Pydantic (e.g. `/api/search?limit=999` -> 422).
@@ -66,12 +70,12 @@ FastAPI/Pydantic (e.g. `/api/search?limit=999` -> 422).
 - `core/errors.py` — `AppError` + global 500 handler (safe error responses).
 - `core/logging.py` — centralised logging.
 - `bootstrap.py` — puts the monorepo root on `sys.path` so `ai` imports work.
-- `models/` — ORM: `Document`, `Chunk`, `Notice`, `Faculty`.
+- `models/` — ORM: `Document`, `Chunk`, `Notice`, `Faculty`, `Program`, `Laboratory`, `ResearchProject`, `StaffMember`, `ExamResource`, `ChatUpload`, `PushSubscription`.
 - `repositories/` — data-access (documents, notices, faculty).
 - `schemas/` — Pydantic request/response contracts.
-- `services/` — `search.py` (retrieval) and `chat.py` (RAG).
-- `api/` — routers (health, notices, search, chat, documents, faculty, research).
-- `alembic/` — migrations `0001..0003` (documents/chunks, embedding col, faculties).
+- `services/` — `search.py` (hybrid retrieval), `knowledge.py` (structured intent routing), `chat.py` (RAG), `uploads.py` (private file Q&A), `notice_sync.py` and `push.py`.
+- `api/` — routers for health, notices, search, chat/uploads, documents, faculty, research, directory data, exams, and notifications.
+- `alembic/` — migrations `0001..0005` (documents/chunks, embeddings, directory tables, uploads/push/exam resources).
 
 ## 5. Frontend internals (frontend/src/)
 
@@ -86,19 +90,19 @@ FastAPI/Pydantic (e.g. `/api/search?limit=999` -> 422).
 
 ## 6. AI layer (ai/)
 
-- `retrieval/` — `scoring` (cosine, reciprocal-rank fusion), `keyword`,
-  `semantic`, `hybrid`. Pure functions, no DB.
-- `rag/` — `context` (evidence), `citations` (validation), `generator`
-  (`ExtractiveAnswerer` used now; `ProviderAnswerer`=LLM, not wired).
-- `prompts/` — system/user prompt templates and the "cannot verify" answer.
-- `embeddings/`, `providers/`, `orchestration/`, `evaluation/`, `tools/` —
-  placeholders.
+- `rag/` — `context` (evidence), `citations` (validation/repair), `generator` (`ExtractiveAnswerer` and provider-backed answerers), and the extractive fallback.
+- `prompts/` — system/user/repair templates and the "cannot verify" answer.
+- `providers/` — typed Gemini, Groq, and embedding clients with bounded retries and header-only API keys.
+- `retrieval/` — `scoring` (cosine, reciprocal-rank fusion), `keyword`, `semantic`, and `hybrid`. Pure functions, no DB.
 
 ## 7. Ingestion (ingestion/)
 
-`url_discovery -> crawler -> html/pdf parser -> cleaner -> metadata -> chunker
--> indexer`. Tested with sample content only; no live AMU crawling. Embeddings
-module has a dev `HashEmbedder` and a `ProviderEmbedder` stub.
+`amu_ingest.py` crawls the official AMU department API and upserts notices,
+faculty, staff, programmes, laboratories, research projects, and an embedded
+search corpus. `exam_ingest.py` reads verified Controller of Examinations pages
+and upserts the `exam_resources` table. `notice_sync.py` provides a notices-only
+background cycle. Embeddings use Gemini `gemini-embedding-2` when a key is
+configured, with a deterministic hash fallback for offline development.
 
 ## 8. Database
 
@@ -111,17 +115,20 @@ module has a dev `HashEmbedder` and a `ProviderEmbedder` stub.
 ## 9. What is used vs. not used (current)
 
 **Used:** FastAPI, Uvicorn, Pydantic(-settings), SQLAlchemy 2, Alembic,
-BeautifulSoup, pypdf, httpx, Next.js 14, React 18, TypeScript 5, pytest.
+BeautifulSoup, pypdf, python-docx, pywebpush/py-vapid, httpx, Next.js 14, React 18,
+TypeScript 5, pytest.
 
-**Not used / deferred (by design):** LangChain, LangGraph, MCP, Redis, Celery,
-Kafka, Elasticsearch, dedicated vector database, Kubernetes, microservices,
-authentication, real LLM/embedding providers, scheduler, Docker/CI deployment.
+**Deferred by design:** LangChain, LangGraph, MCP, Redis, Celery, Kafka,
+Elasticsearch, dedicated vector database, Kubernetes, microservices,
+authentication/user accounts, production PostgreSQL/pgvector, and Docker/CI
+deployment.
 
 ## 10. Configuration / environment variables
 
 See `.env.example`: `DATABASE_URL`, `CORS_ORIGINS`, `NEXT_PUBLIC_API_URL`,
-`ENVIRONMENT`, `LOG_LEVEL`; reserved (unused yet): `LLM_PROVIDER`,
-`LLM_API_KEY`, `EMBEDDING_PROVIDER`, `EMBEDDING_API_KEY`, `REDIS_URL`.
+`ENVIRONMENT`, `LOG_LEVEL`, `LLM_PROVIDER`, `LLM_API_KEY`, `GROQ_API_KEY`,
+`GEMINI_API_KEY`, `EMBEDDING_PROVIDER`, `EMBEDDING_API_KEY`, upload expiry,
+VAPID keys, and notice-sync settings. `REDIS_URL` remains reserved.
 
 ## 11. Running it
 
@@ -147,46 +154,49 @@ cd ai;        backend\.venv\Scripts\python.exe -m pytest tests -q   # 10 pass
 cd ingestion; .venv\Scripts\python.exe -m pytest tests -q           # 13 pass
 cd frontend; npx tsc --noEmit                          # 0 errors
 ```
-## 8. YouRobo (the AI chat assistant)
+## 13. YouRobo (the AI chat assistant)
 
-- **YouRobo** is the name of the chat assistant (branded on the /chat page).
-- It uses a Gemini provider when configured, and an offline 'extractive' mode
-  otherwise. Both paths return the same response shape with numbered sources.
-- Enable Gemini by setting in the backend environment (.env or real env):
+- **YouRobo** answers across real faculty, staff, programmes, laboratories,
+  research, notices, documents, exam resources, and an optional private file.
+- It uses Gemini or Groq when configured and grounded extractive mode otherwise.
+  Provider keys are read from the untracked backend `.env`; never commit them.
+- Structured intent routing selects the authoritative table for questions about
+  people, exams, notices, programmes, laboratories, research, or staff. The LLM
+  sees numbered evidence only; citation validation/repair and the extractive
+  fallback prevent unsupported claims.
+- Private files are token-protected, expiring, and isolated from official search.
 
-      LLM_PROVIDER=gemini
-      LLM_API_KEY=...     # or GEMINI_API_KEY=... (alias supported)
+### Provider and citation flow
 
-- How the provider is wired: i/providers/gemini.py (HTTP client with bounded
-  retries and typed errors) <- i/rag/generator.py (GeminiAnswerer) <-
-  pp/services/chat.py (chooses provider vs extractive, validates citations).
-- No key set? pp/services/chat.py logs INFO and degrades to the extractive
-  answerer, so the app keeps working on a fresh clone. Never commit a real key.
-- While no key is configured you may see the 
-otice field returned from
-  /api/chat indicating the extractive path. This is by design (no fabrication).
-## Real (live) data ingestion
+`ai/providers/gemini.py` and `ai/providers/groq.py` implement bounded, typed HTTP
+clients. `ai/rag/generator.py` builds a numbered evidence prompt.
+`app/services/chat.py` chooses a provider or the extractive answerer, validates
+citations, attempts one constrained repair, and falls back if the provider is
+unavailable or the answer remains unsafe. The response exposes `provider` and
+`notice` so the UI can be honest about how an answer was produced.
 
-The database holds real AMU data, not samples, since the real-ingestion work:
+## 14. Real (live) data ingestion
 
-- `scripts/ingest_real.py` removes any leftover sample rows, then calls
-  `ingestion/app/amu_ingest.py`, which crawls the official AMU department API
-  (`https://api.amu.ac.in/api/v1/department-list-data?...`) and upserts:
-  notices (paginated, ~160), faculty (18), non-teaching staff (12), programmes
-  (5), laboratories, research projects, plus an embedded search/RAG corpus.
-- Every crawl writes an `ingestion_log` row (source, rows found/written, status).
-- Real embeddings: when `LLM_API_KEY` / `GEMINI_API_KEY` is set, new chunks are
-  embedded with `gemini-embedding-2` (3072 dims, free tier) via
-  `ai/providers/gemini_embed.py` (key in header only). Without a key, chunks are
-  stored un-embedded and search falls back to the deterministic hash embedder.
-- Want to re-pull fresh AMU data?
+`scripts/ingest_real.py` removes leftover sample rows, calls
+`ingestion/app/amu_ingest.py` for the official AMU department API, and calls
+`ingestion/app/exam_ingest.py` for verified Controller of Examinations pages.
+It upserts notices, faculty, staff, programmes, laboratories, research projects,
+exam resources, and the embedded search corpus. Every crawl writes an
+`ingestion_log` row.
 
-  ```
-  cd backend
-  .\.venv\Scripts\python.exe -m alembic upgrade head
-  .\.venv\Scripts\python.exe ..\scripts\ingest_real.py
-  ```
+When an embedding key is configured, new chunks are embedded with
+`gemini-embedding-2` (3072 dims, free tier) via `ai/providers/gemini_embed.py`;
+the key travels only in the request header. Without a key, chunks remain
+unembedded and search uses the deterministic hash fallback.
 
-- New directory tables + endpoints: `programs`, `laboratories`,
-  `research_projects`, `staff_members` (migration 0004) served at
-  `/api/programs`, `/api/laboratories`, `/api/research-projects`, `/api/staff`.
+To re-pull data:
+
+```bash
+cd backend
+.venv\Scripts\python.exe -m alembic upgrade head
+.venv\Scripts\python.exe ..\scripts\ingest_real.py
+```
+
+Migration 0005 adds `chat_uploads`, `chat_upload_chunks`,
+`push_subscriptions`, and `exam_resources`. The notices-only background cycle is
+`app/services/notice_sync.py`; browser push delivery is `app/services/push.py`.

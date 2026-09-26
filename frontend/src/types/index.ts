@@ -33,6 +33,8 @@ export interface ChatSource {
   document_id: string;
   chunk_id: string;
   text: string;
+  title: string;
+  source_type: "faculty" | "staff" | "programme" | "laboratory" | "research" | "notice" | "exam" | "document" | "upload" | "official";
 }
 
 // Matches the response from POST /api/chat on the backend.
@@ -43,4 +45,14 @@ export interface ChatResponse {
   provider: string;
   // Set when the answer had to be degraded (provider down, invalid citations).
   notice: string | null;
+}
+
+export interface ChatUpload {
+  id: string;
+  access_token: string;
+  filename: string;
+  content_type: string;
+  size_bytes: number;
+  chunk_count: number;
+  expires_at: string;
 }

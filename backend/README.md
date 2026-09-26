@@ -2,7 +2,7 @@
 
 Python + FastAPI REST API and application logic for AMUCS Nexus.
 
-> STATUS: Implemented - health, notices, search, and grounded chat (RAG) endpoints, SQLAlchemy models (Document/Chunk/Notice), a migrations setup, and a database layer. Logging and error handling are wired. No authentication is configured yet (by design).
+> STATUS: Implemented - health, notices, search, grounded chat (RAG), directory data, exam resources, private uploads, and opt-in notifications. SQLAlchemy models, Alembic migrations, logging, and error handling are wired. No user authentication is configured yet (by design).
 
 ## Endpoints
 
@@ -13,6 +13,12 @@ Python + FastAPI REST API and application logic for AMUCS Nexus.
 | GET  | /api/notices/{id}  | Single notice or 404 | - |
 | GET  | /api/search        | Hybrid search with filters (q, limit, department, document_type) | - |
 | POST | /api/chat          | Source-grounded answer + cited sources (RAG) | - |
+| GET  | /api/faculty       | Faculty directory | - |
+| GET  | /api/programs, /api/laboratories, /api/research-projects, /api/staff | Real department directory data | - |
+| GET  | /api/exams         | Verified official Controller of Examinations resources | - |
+| POST | /api/chat/uploads  | Private PDF/DOCX/TXT/Markdown upload; returns a one-time token | Token |
+| DELETE | /api/chat/uploads/{upload_id} | Delete private extracted text | Token |
+| GET | /api/notifications/vapid-public-key | Opt-in notification configuration | - |
 
 Interactive API docs are served by FastAPI at `/docs` when running.
 
@@ -48,4 +54,4 @@ cd backend
 .venv\Scripts\python -m pytest -q
 ```
 
-Planned (not built): documents/faculty/research endpoints, authentication, feedback endpoint.
+Implemented: health, notices, search, grounded chat, directory data, exam resources, private uploads, and anonymous opt-in notifications. Deferred by design: user authentication, production PostgreSQL/pgvector deployment, and Docker/CI deployment.

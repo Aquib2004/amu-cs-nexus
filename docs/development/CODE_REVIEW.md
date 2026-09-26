@@ -54,12 +54,13 @@ running the code (not assumed) and most have been fixed and re-tested.
 9. READMEs claimed endpoints/models were "empty"/"not implemented" when they
    were built — rewritten to match reality.
 
-## Confirmed still not implemented (by design, not forgotten)
-- Real LLM/embedding providers (`ProviderAnswerer` raises `NotImplementedError`).
-- Running PostgreSQL + pgvector (dev uses SQLite).
-- Scheduler, authentication, Docker/CI, deployment.
-- Documents/Faculty/Research were missing — **now built** (endpoints, migration
-  `0003`, pages). Exams (Controller of Examination) added as an integration page.
+## Remaining production work
+- Production PostgreSQL + pgvector deployment.
+- User authentication/accounts and authorization.
+- Docker/CI and hosted deployment.
+- Richer individual faculty scholarly profiles and additional AMU modules.
+
+Implemented and verified: live AMU ingestion, real embeddings, Gemini/Groq providers, private uploads, exam resources, and anonymous opt-in notifications.
 
 ## Note on external integrations
 - The AMU **Controller of Examinations** portal may refuse to render inside an

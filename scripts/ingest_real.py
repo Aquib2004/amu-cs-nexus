@@ -74,6 +74,10 @@ def main() -> None:
     total = amu.run_ingestion(embedding=True)
     logger.info("done. total rows written: %d", total)
 
+    from ingestion.app.exam_ingest import run as sync_exam_resources
+    exam_rows = sync_exam_resources(embedding=True)
+    logger.info("exam resources written: %d", exam_rows)
+
 
 if __name__ == "__main__":
     main()

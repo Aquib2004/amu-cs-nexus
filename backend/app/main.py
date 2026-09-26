@@ -1,5 +1,12 @@
 # AMUCS Nexus backend entry point.
 
+from __future__ import annotations
+
+import asyncio
+import contextlib
+import logging
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -7,7 +14,9 @@ from app.api.chat import router as chat_router
 from app.api.documents import router as documents_router
 from app.api.faculty import router as faculty_router
 from app.api.health import router as health_router
+from app.api.exams import router as exams_router
 from app.api.laboratories import router as laboratories_router
+from app.api.notifications import router as notifications_router
 from app.api.notices import router as notices_router
 from app.api.programs import router as programs_router
 from app.api.research import router as research_router
@@ -18,9 +27,40 @@ from app.core.config import settings
 from app.core.errors import register_error_handlers
 from app.core.logging import setup_logging
 
+
+logger = logging.getLogger(__name__)
+
+
+async def _notice_loop() -> None:
+    from app.core.database import SessionLocal
+    from app.services.notice_sync import run_notice_cycle
+
+    while True:
+        session = SessionLocal()
+        try:
+            await asyncio.to_thread(run_notice_cycle, session)
+        except Exception:
+            logging.getLogger(__name__).exception("Notice synchronization cycle failed")
+        finally:
+            session.close()
+        await asyncio.sleep(settings.notice_sync_interval_seconds)
+
+
+@asynccontextmanager
+async def lifespan(_: FastAPI):
+    task = None
+    if settings.notice_sync_enabled:
+        task = asyncio.create_task(_notice_loop())
+    yield
+    if task:
+        task.cancel()
+        with contextlib.suppress(asyncio.CancelledError):
+            await task
+
+
 setup_logging(settings.log_level)
 
-app = FastAPI(title=settings.project_name, version=settings.version)
+app = FastAPI(title=settings.project_name, version=settings.version, lifespan=lifespan)
 app.state.settings = settings
 
 # Allow the Next.js frontend (and any configured origin) to call the API from the
@@ -44,5 +84,7 @@ app.include_router(programs_router, prefix="/api")
 app.include_router(laboratories_router, prefix="/api")
 app.include_router(research_projects_router, prefix="/api")
 app.include_router(staff_router, prefix="/api")
+app.include_router(exams_router, prefix="/api")
+app.include_router(notifications_router, prefix="/api")
 
 register_error_handlers(app)

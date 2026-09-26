@@ -5,7 +5,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))  # repo root -> import ai
 
-from ai.prompts.rag_prompts import UNVERIFIED_ANSWER, build_user_prompt  # noqa: E402
+from ai.prompts.rag_prompts import UNVERIFIED_ANSWER, build_repair_prompt, build_user_prompt  # noqa: E402
 from ai.rag.citations import citations_are_valid, extract_citations  # noqa: E402
 from ai.rag.context import build_evidence, format_context  # noqa: E402
 from ai.rag.generator import ExtractiveAnswerer, GeminiAnswerer  # noqa: E402
@@ -50,6 +50,14 @@ def test_extractive_answerer_cites_evidence() -> None:
     answer = ExtractiveAnswerer().generate("admission notice date", _evidence())
     assert "[1]" in answer and "admission" in answer.lower()
     assert citations_are_valid(answer, {1, 2})
+
+
+def test_repair_prompt_lists_only_allowed_citations() -> None:
+    prompt = build_repair_prompt(
+        "result", "[1] Result portal", "Draft with [9] and [1].", {1, 2}
+    )
+    assert "ALLOWED CITATION NUMBERS: [1], [2]" in prompt
+    assert "[9]" in prompt
 
 
 def test_extractive_answerer_admits_gap() -> None:

@@ -10,15 +10,15 @@ The central principle:
 
 ## Current status
 
-- Backend (FastAPI): health, notices, search (keyword + semantic + hybrid), and source-grounded chat (RAG) endpoints. SQLAlchemy models + Alembic migrations. CORS and input validation in place.
-- AI layer: `ai/retrieval` (cosine, reciprocal-rank fusion, keyword, semantic, hybrid) and `ai/rag` (evidence, citations, extractive generator). `POST /api/chat` answers from retrieved evidence with cited sources; it does not require an LLM and cannot fabricate claims.
-- Ingestion: crawler, HTML/PDF parsing, cleaning, metadata, chunking, indexer - implemented and unit-tested with sample content. No live AMU crawling is performed.
-- Frontend (Next.js): Home, Search, Notices, Chat pages wired to the API. Documents, Faculty, Research are placeholders.
+- Backend (FastAPI): health, notices, search, source-grounded chat, directory, exam, upload, and notification endpoints. SQLAlchemy models and Alembic migration 0005 are applied to the development SQLite database.
+- AI layer: `ai/retrieval`, `ai/rag`, Gemini and Groq providers, Gemini `gemini-embedding-2` vectors, structured intent routing, citation validation/repair, and an extractive fallback that never invents URLs, dates, or exam information.
+- Ingestion: live AMU department API and official Controller of Examinations ingestion, with idempotent upserts and `ingestion_log` auditing.
+- Frontend (Next.js): YouRobo with official/private-file modes, per-answer citations, file selection for PDF/DOCX/TXT/Markdown, and an explicit opt-in notice-alert control.
 - See `docs/development/project-status.md` for precise status and `CHANGELOG.md` for changes.
 
-### Not implemented (honest)
-Real LLM/embedding providers (requires credentials), running PostgreSQL/pgvector (dev uses SQLite), scheduler, authentication, Docker/CI deployment, Documents/Faculty/Research endpoints
-+UI. A dedicated chatbot with an LLM is not wired. Powers `POST /api/chat` uses the offline, extractive RAG path.
+### Privacy and deployment notes
+- Uploaded files are processed in memory; the original binary is discarded. Only extracted text, chunks, metadata, and a SHA-256 hash of a one-time access token are stored. Uploads expire after 24 hours by default and require the token for every question.
+- Notice notifications are anonymous and opt-in. Browser permission is requested only after the student presses **Enable alerts**. VAPID private keys belong in the untracked `backend/.env`; never commit them.
 
 ## Repository structure
 

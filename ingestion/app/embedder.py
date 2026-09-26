@@ -34,7 +34,11 @@ class HashEmbedder(Embedder):
 
 
 class ProviderEmbedder(Embedder):
-    """Real provider (API/model). Requires credentials; not wired yet."""
+    """Real provider adapter is implemented in `ai/providers/gemini_embed.py`.
+
+    This legacy interface remains a placeholder for callers that still construct
+    an ingestion-local embedder; production ingestion uses the shared provider.
+    """
 
     def embed(self, text: str) -> list[float]:
         raise NotImplementedError(

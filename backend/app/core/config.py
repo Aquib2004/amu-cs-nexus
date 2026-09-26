@@ -39,6 +39,19 @@ class Settings(BaseSettings):
     embedding_api_key: str | None = None
     redis_url: str | None = None
 
+    # Student-uploaded files are private, token-protected, and automatically
+    # discarded. Only extracted text is retained.
+    upload_expiry_hours: int = 24
+
+    # Anonymous opt-in Web Push. Generate VAPID keys with py_vapid; the private
+    # key belongs in the untracked backend .env and is never returned to browsers.
+    vapid_private_key: str | None = None
+    vapid_private_key_file: str | None = None
+    vapid_public_key: str | None = None
+    vapid_subject: str = "mailto:amu-cs-nexus@example.com"
+    notice_sync_enabled: bool = False
+    notice_sync_interval_seconds: int = 900
+
     # Comma-separated list of allowed browser origins for CORS.
     cors_origins: str = "http://localhost:3000"
 

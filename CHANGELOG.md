@@ -5,43 +5,43 @@ All notable changes are documented here. Format based on Keep a Changelog; versi
 ## [Unreleased]
 
 ### Added
+- **Unified YouRobo knowledge answering:** YouRobo now routes questions across
+  real faculty, staff, programmes, laboratories, research projects, notices,
+  documents, and official examination resources. Exact-name lookup tolerates
+  minor student spelling errors (for example, “Armaan Rasool Faridi”).
+- **Private file Q&A:** students can upload PDF, DOCX, TXT, or Markdown notes and
+  question papers. Only extracted text is retained, access requires a one-time
+  token, uploads expire automatically, and questions are isolated to the
+  selected file.
+- **Live notice updates:** idempotent notices-only synchronization can run from
+  the FastAPI lifespan, with opt-in anonymous Web Push subscriptions and automatic
+  cleanup of expired/invalid endpoints. Browser permission is requested only
+  after the student presses **Enable alerts**.
+- **Official exam resources:** `exam_resources` table, `/api/exams`, conservative
+  Controller of Examinations ingestion, and exam-aware YouRobo answers. The
+  assistant distinguishes official notices from portal guidance and never invents
+  schedules, marks, results, or question papers.
+- **Migration 0005:** `chat_uploads`, `chat_upload_chunks`,
+  `push_subscriptions`, and `exam_resources` tables.
 - **Real AMU data (this replaces sample/dev data as the source of truth):**
   - `scripts/ingest_real.py` + `ingestion/app/amu_ingest.py`: crawls the official
     AMU department API (`api.amu.ac.in`) and upserts real records idempotently.
-  - Real rows: **18 faculty** (with photos/emails), **160 notices** (paginated,
-    with real dates + PDF links), **12 non-teaching staff**, **5 programmes**
-    (B.Sc., MCA, M.Sc., M.Sc. Cyber Security, Ph.D.), **laboratories**, and
-    **completed research projects** with funding agencies and investigators.
+  - Real rows: **18 faculty**, **161 notices**, **12 non-teaching staff**,
+    **5 programmes**, laboratories, and research projects.
+  - `ingestion/app/exam_ingest.py` stores **23 verified official exam resources**.
   - Migration **0004** adds `programs`, `laboratories`, `research_projects`,
     `staff_members`, `ingestion_log` tables and faculty `image_url`/`source_url`.
   - New endpoints: `GET /api/programs`, `GET /api/laboratories`,
-    `GET /api/research-projects`, `GET /api/staff`.
-- **Real embeddings**: `ai/providers/gemini_embed.py` (Gemini `gemini-embedding-2`,
+    `GET /api/research-projects`, `GET /api/staff`, `GET /api/exams`.
+- **Real embeddings:** `ai/providers/gemini_embed.py` (Gemini `gemini-embedding-2`,
   3072 dims, free tier, key in header only). Ingestion stores vectors in
-  `chunks.embedding`; search uses them for genuine semantic ranking with a
-  hash fallback when no key is configured.
-- **Improved AI answers**: student-focused `SYSTEM_PROMPT` (concise, cited,
-  honest), chat context raised from 5 to 8 evidence chunks, deduplicated
-  dimension-aware hybrid search so real content (labs/programmes) is always
-  retrievable.
-- Frontend: `/programs`, `/laboratories`, `/staff` pages; real photos/emails on
-  `/faculty`; real research projects on `/research`; nav + home cards updated.
-- `scripts/ingest_real.py` removes fabricated sample rows before ingesting and
-  logs every crawl in `ingestion_log`.
-- Documentation and project scaffolding: Phases 1-9 (monorepo init, architecture/
-  requirements docs, backend foundation, database layer, frontend foundation, API
-  integration (notices/search), ingestion pipeline, embeddings field, retrieval search).
-- Phase 10 (RAG) + release fixes: `ai/rag` (evidence, citations, extractive
-  generator) and `ai/prompts`; `POST /api/chat` RAG endpoint; `/chat` page;
-  repository-root `ai` package importable outside pytest; CORS middleware; input
-  validation on search/chat.
-- Documents / Faculty / Research + Exams: `GET /api/documents`, `GET /api/faculty`,
-  `GET /api/research` (migration 0003, directory API tests) + frontend pages.
-- YouRobo (Gemini) chatbot: `ai/providers/gemini.py` (bounded retries, typed
-  errors, key in header only); `LLM_PROVIDER=gemini` + `LLM_API_KEY` (or
-  `GEMINI_API_KEY` alias) with graceful extractive fallback; `/chat` page rebranded.
-- UI redesign: AMU logo in header + favicon, modern stylesheet, ADR-002 branding,
-  developer guide + `.env.example` docs.
+  `chunks.embedding`; search uses them for genuine semantic ranking with a hash
+  fallback when no key is configured.
+- **Improved AI answers:** student-focused system prompt, structured intent
+  routing, source titles/types in evidence, citation-repair pass, and a safe
+  extractive fallback.
+- Frontend: YouRobo official/private-file modes, per-answer source panels, file
+  picker, notices alert control, and responsive styles.
 
 ### Changed
 - `chunks.embedding` is now populated with real (3072-dim) Gemini vectors after
@@ -56,4 +56,7 @@ All notable changes are documented here. Format based on Keep a Changelog; versi
 - Frontend dev/build blockers (corrupt SWC binary, BOM in files, broken home-directory postcss config).
 
 ### Not implemented
-- Running PostgreSQL/pgvector, scheduler, authentication, Docker/CI deployment, feedback endpoint, LangChain/LangGraph/MCP.
+- Production PostgreSQL/pgvector deployment, authentication/user accounts, Docker/CI
+  deployment, and a hosted push service. Local SQLite, anonymous opt-in Web Push,
+  live AMU ingestion, real embeddings, and the complete student-facing directory
+  are implemented and tested.

@@ -429,6 +429,103 @@ main {
   font-size: 0.8rem;
   color: var(--muted);
   margin: 0.2rem 0 0;
+
+.chat-scope {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+  padding: 0.75rem 1.25rem;
+  border-bottom: 1px solid var(--line);
+  background: #fff;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.file-chip {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  flex-wrap: wrap;
+}
+
+.file-picker {
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.file-picker.disabled {
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+.file-picker input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+}
+
+.link-button {
+  border: 0;
+  background: transparent;
+  color: var(--amu-green);
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0;
+}
+
+.chat-welcome {
+  display: grid;
+  gap: 0.25rem;
+  color: var(--muted);
+}
+
+.chat-welcome strong {
+  color: var(--ink);
+}
+
+.inline-notice {
+  margin-top: 0.55rem;
+  padding: 0.45rem 0.6rem;
+  border-radius: 8px;
+  background: #fff4d7;
+  color: #6d5418;
+  font-size: 0.8rem;
+  white-space: normal;
+}
+
+.chat-composer {
+  margin: 0;
+  padding: 1rem 1.25rem 0.4rem;
+  border-top: 1px solid var(--line);
+}
+
+.notice-alert-panel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.15rem;
+  margin: -0.5rem 0 1.4rem;
+  border: 1px solid #cddcca;
+  border-radius: var(--radius);
+  background: #f1f6ed;
+}
+
+.notice-alert-panel p {
+  margin: 0.15rem 0 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.alert-message {
+  display: block;
+  margin-top: 0.3rem;
+  color: var(--amu-green);
+  font-size: 0.8rem;
+}
 }
 
 .chat-thread {
@@ -630,5 +727,20 @@ main {
   .field-row {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .chat-scope,
+  .notice-alert-panel {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .chat-thread {
+    max-height: 26rem;
+    padding: 1rem;
+  }
+
+  .msg {
+    max-width: 96%;
   }
 }

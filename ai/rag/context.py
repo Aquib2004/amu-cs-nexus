@@ -15,6 +15,8 @@ class Evidence:
     source_url: str
     document_id: str
     chunk_id: str
+    title: str = "Source"
+    source_type: str = "official"
 
 
 def build_evidence(results) -> list[Evidence]:
@@ -26,6 +28,8 @@ def build_evidence(results) -> list[Evidence]:
             source_url=result.source_url,
             document_id=str(result.document_id),
             chunk_id=str(result.chunk_id),
+            title=getattr(result, "title", "Source"),
+            source_type=getattr(result, "source_type", "official"),
         )
         for index, result in enumerate(results, start=1)
     ]
@@ -34,6 +38,7 @@ def build_evidence(results) -> list[Evidence]:
 def format_context(evidence: list[Evidence]) -> str:
     """Render evidence as a numbered block (shown to an LLM; also used in logs)."""
     return "\n\n".join(
-        f"[{item.number}] {item.text}\n(source: {item.source_url})"
+        f"[{item.number}] {item.title}: {item.text}\n"
+        f"(source type: {item.source_type}; source: {item.source_url})"
         for item in evidence
     )
