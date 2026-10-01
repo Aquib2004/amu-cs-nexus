@@ -1,12 +1,37 @@
-﻿# ============================================================
-# AMUCS Nexus - Docker Compose
-# ============================================================
-# PLACEHOLDER ONLY.
-# No services are defined yet. Docker / containerization is
-# introduced in a later phase (Phase 14), not during repository
-# initialization. This file exists to reserve the root filename
-# and to record intent. Do not add services until there is an
-# actual running application to containerize.
 services:
-  {}:
+  backend:
+    build:
+      context: .
+      dockerfile: docker/backend.Dockerfile
+    working_dir: /app/backend
+    command: >-
+      bash -lc "python -m pip install --no-cache-dir -r requirements.txt &&
+      python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
+    volumes:
+      - .:/app
+    env_file:
+      - .env
+    environment:
+      PYTHONUNBUFFERED: "1"
+      DATABASE_URL: sqlite:///./amucs_nexus_dev.db
+      CORS_ORIGINS: http://localhost:3000
+    ports:
+      - "8000:8000"
 
+  frontend:
+    build:
+      context: .
+      dockerfile: docker/frontend.Dockerfile
+    working_dir: /app/frontend
+    command: >-
+      bash -lc "npm install && npm run dev -- --hostname 0.0.0.0 --port 3000"
+    volumes:
+      - .:/app
+    env_file:
+      - .env
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8000
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
