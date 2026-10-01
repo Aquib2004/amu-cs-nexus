@@ -52,7 +52,7 @@ def remove_chat_file(
     try:
         delete_upload(db, upload_id, x_upload_token)
     except UploadAccessError as exc:
-        raise HTTPException(status_code=403, detail=str(exc)) from exc
+        raise HTTPException(status_code=401, detail=str(exc)) from exc
     return UploadDeleteResponse()
 
 
@@ -70,4 +70,4 @@ def chat(payload: ChatRequest, db: Session = Depends(get_db)) -> ChatResponse:
             upload_token=payload.upload_token,
         )
     except UploadAccessError as exc:
-        raise HTTPException(status_code=403, detail=str(exc)) from exc
+        raise HTTPException(status_code=401, detail=str(exc)) from exc

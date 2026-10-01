@@ -2,7 +2,7 @@
 //
 // The browser (client) sends a GET to FastAPI, and we read the JSON list.
 
-import { API_BASE_URL } from "@/lib/api";
+import { requestJson } from "@/lib/api";
 import type { Notice } from "@/types";
 
 export interface NoticeListParams {
@@ -18,14 +18,5 @@ export async function getNotices(
   if (params.limit) query.set("limit", String(params.limit));
   if (params.offset) query.set("offset", String(params.offset));
 
-  const url = `${API_BASE_URL}/api/notices?${query.toString()}`;
-  const response = await fetch(url);
-
-  if (!response.ok) {
-    throw new Error(
-      `Failed to load notices: ${response.status} ${response.statusText}`
-    );
-  }
-
-  return (await response.json()) as Notice[];
+  return requestJson<Notice[]>(`/api/notices?${query.toString()}`, undefined, "Loading notices");
 }

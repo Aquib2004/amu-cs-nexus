@@ -195,9 +195,42 @@ def _seed_faculty(session: Session) -> None:
     print(f"Seeded {added} new faculty members." if added else "All faculty already present; skipping.")
 
 
+def _looks_like_real_data(session: Session) -> str | None:
+    """Return a reason string if the target database holds real AMU records.
+
+    This script inserts clearly-labelled sample rows. Running it against a
+    database that already contains real crawled AMU data would mix fake
+    faculty/notices into production content, so we refuse instead of merging.
+    """
+    # Real notices and faculty come from the official AMU API and never use
+    # these sample markers; only the dev seed writes them.
+    for model, column, sample_value in (
+        (Faculty, Faculty.name, "Prof. A. Rahman"),
+        (Notice, Notice.title, "Mid-semester examination schedule"),
+        (Document, Document.title, "Computer Vision Laboratory"),
+    ):
+        total = session.query(model).count()
+        if total == 0:
+            continue
+        sample_present = session.query(model).filter(column == sample_value).count() > 0
+        if not sample_present:
+            kind = model.__name__.lower()
+            return (
+                f"refusing to seed: database already contains {total} real {kind} "
+                "record(s) ingested from the official AMU API. Sample data would "
+                "be mixed into real content. Use an empty database (for example "
+                "DATABASE_URL=sqlite:///./fresh_dev.db) if you want sample rows."
+            )
+    return None
+
+
 def main() -> None:
     Base.metadata.create_all(engine)  # no-op if alembic already created tables
     with Session(engine) as session:
+        refusal = _looks_like_real_data(session)
+        if refusal:
+            print(refusal)
+            raise SystemExit(1)
         _seed_documents(session)
         _seed_notices(session)
         _seed_faculty(session)

@@ -17,7 +17,7 @@ from ai.retrieval import hybrid as hybrid_alg
 from ai.retrieval import keyword as keyword_alg
 from ai.retrieval.scoring import cosine_similarity
 
-from app.core.config import gemini_embedding_key
+from app.core.config import gemini_embedding_key, settings
 from app.models.document import Chunk, Document
 from app.schemas.search import SearchResult
 
@@ -79,8 +79,10 @@ def search_chunks(
     if not items or not query:
         return []
 
-    key_ranking = keyword_alg.rank_keyword(query, items)
-    relevant = {rid for rid, score in key_ranking if score > 0.0}
+    keyword_ranking = keyword_alg.rank_keyword(query, items)
+    # Keyword matches are trustworthy on their own, so any positive overlap
+    # keeps a chunk in the candidate set.
+    relevant = {rid for rid, score in keyword_ranking if score > 0.0}
 
     # --- semantic: real query vector (dims match stored) or hash-per-chunk ---
     query_real = _real_query_vector(query)
@@ -94,14 +96,24 @@ def search_chunks(
         else:
             score = cosine_similarity(query_hash, _hash_query_vector(chunk.text))
         sem_scored.append((str(chunk.id), score))
-        if score > _SEM_EPSILON:
-            relevant.add(str(chunk.id))
+
+    # Semantic hits must clear an absolute floor AND stand out from this
+    # query's own baseline. Without the margin test every query "matches".
+    if sem_scored:
+        scores = sorted((score for _, score in sem_scored), reverse=True)
+        median = scores[len(scores) // 2]
+        threshold = max(
+            settings.search_semantic_floor,
+            median + settings.search_semantic_margin,
+        )
+        sem_scored = [(rid, score) for rid, score in sem_scored if score >= threshold]
+        relevant.update(rid for rid, _ in sem_scored)
     sem_scored.sort(key=lambda pair: pair[1], reverse=True)
 
     if not relevant:
         return []
 
-    fused = hybrid_alg.rank_hybrid(key_ranking, sem_scored)
+    fused = hybrid_alg.rank_hybrid(keyword_ranking, sem_scored)
     by_id = {str(r.Chunk.id): (r.Chunk, r.Document) for r in rows}
 
     results: list[SearchResult] = []

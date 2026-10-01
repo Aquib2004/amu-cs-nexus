@@ -1,4 +1,4 @@
-﻿# Application error types and global exception handlers.
+# Application error types and global exception handlers.
 #
 # - AppError is raised by application code for expected, controllable
 #   failures. Its message and HTTP status are safe to send to clients.
@@ -29,6 +29,11 @@ def register_error_handlers(app: FastAPI) -> None:
     @app.exception_handler(AppError)
     async def app_error_handler(_request: Request, exc: AppError) -> JSONResponse:
         return JSONResponse(status_code=exc.status_code, content={"detail": exc.message})
+
+    @app.exception_handler(ValueError)
+    async def value_error_handler(_request: Request, exc: ValueError) -> JSONResponse:
+        logger.warning("Invalid value: %s", exc)
+        return JSONResponse(status_code=400, content={"detail": "Invalid request value"})
 
     @app.exception_handler(Exception)
     async def unhandled_error_handler(_request: Request, exc: Exception) -> JSONResponse:

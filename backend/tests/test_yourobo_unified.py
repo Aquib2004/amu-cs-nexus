@@ -126,7 +126,7 @@ def test_private_text_upload_can_be_questioned_and_deleted() -> None:
     assert answer.json()["sources"][0]["source_type"] == "upload"
 
     wrong = client.post("/api/chat", json={**payload, "upload_token": "x" * 40})
-    assert wrong.status_code == 403
+    assert wrong.status_code == 401
 
     removed = client.delete(
         f"/api/chat/uploads/{upload['id']}",

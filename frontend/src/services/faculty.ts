@@ -1,6 +1,6 @@
 // Faculty service: talks to the /api/faculty endpoints.
 
-import { API_BASE_URL } from "@/lib/api";
+import { requestJson } from "@/lib/api";
 import type { FacultyMember } from "@/types/directory";
 
 export async function getFaculty(
@@ -8,13 +8,5 @@ export async function getFaculty(
 ): Promise<FacultyMember[]> {
   const query = new URLSearchParams();
   if (department) query.set("department", department);
-  const response = await fetch(
-    `${API_BASE_URL}/api/faculty?${query.toString()}`
-  );
-  if (!response.ok) {
-    throw new Error(
-      `Failed to load faculty: ${response.status} ${response.statusText}`
-    );
-  }
-  return (await response.json()) as FacultyMember[];
+  return requestJson<FacultyMember[]>(`/api/faculty?${query.toString()}`, undefined, "Loading faculty");
 }

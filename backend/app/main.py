@@ -36,9 +36,19 @@ async def _notice_loop() -> None:
     from app.services.notice_sync import run_notice_cycle
 
     while True:
-        session = SessionLocal()
+        try:
+            # Each cycle gets its own session and always closes it, so a failed
+            # sync cannot leak connections or stop the loop.
+            session = SessionLocal()
+        except Exception:
+            logging.getLogger(__name__).exception("Could not open a database session for notice sync")
+            await asyncio.sleep(settings.notice_sync_interval_seconds)
+            continue
         try:
             await asyncio.to_thread(run_notice_cycle, session)
+        except asyncio.CancelledError:
+            session.close()
+            raise
         except Exception:
             logging.getLogger(__name__).exception("Notice synchronization cycle failed")
         finally:
@@ -68,6 +78,7 @@ async def lifespan(_: FastAPI):
     from app.core.database import SessionLocal
     from app.services.uploads import purge_expired_uploads
 
+    _log_optional_features()
     notice_task = None
     cleanup_task = None
     if settings.notice_sync_enabled:
@@ -90,14 +101,51 @@ async def lifespan(_: FastAPI):
 
 setup_logging(settings.log_level)
 
+
+def _cors_origins() -> list[str]:
+    """Resolve allowed origins, never falling back to a wildcard.
+
+    An unset or empty CORS_ORIGINS keeps the local development default so a
+    fresh clone works, but production must set it explicitly.
+    """
+    configured = [origin.strip() for origin in (settings.cors_origins or "").split(",") if origin.strip()]
+    if not configured:
+        if settings.environment.lower() == "production":
+            logger.warning(
+                "CORS_ORIGINS is not set in production; no cross-origin browser requests will be allowed."
+            )
+            return []
+        logger.warning(
+            "CORS_ORIGINS is not set; defaulting to http://localhost:3000 for local development."
+        )
+        return ["http://localhost:3000"]
+    if "*" in configured:
+        raise RuntimeError("CORS_ORIGINS must not contain '*'; list explicit origins instead.")
+    return configured
+
+
+def _log_optional_features() -> None:
+    """Log which optional integrations are disabled so ops can see the state."""
+    if not (settings.llm_api_key or settings.gemini_api_key or settings.groq_api_key):
+        logger.info("LLM provider keys not set; using extractive fallback")
+    if not (settings.embedding_api_key or settings.gemini_api_key):
+        logger.info("Embedding provider key not set; storing raw text chunks")
+    if not (settings.vapid_private_key or settings.vapid_private_key_file):
+        logger.info("Web Push notifications disabled")
+
+
 app = FastAPI(title=settings.project_name, version=settings.version, lifespan=lifespan)
 app.state.settings = settings
+
+from app.core.database import engine  # noqa: E402
+
+app.state.engine = engine
 
 # Allow the Next.js frontend (and any configured origin) to call the API from the
 # browser. Origins come from settings.cors_origins (comma-separated string).
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[o.strip() for o in settings.cors_origins.split(",") if o.strip()],
+    allow_origins=_cors_origins(),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

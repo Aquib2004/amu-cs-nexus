@@ -14,7 +14,7 @@ router = APIRouter(prefix="/laboratories", tags=["laboratories"])
 @router.get("", response_model=list[LaboratoryRead])
 def list_laboratories(
     limit: int = Query(50, ge=1, le=100),
-    offset: int = 0,
+    offset: int = Query(0, ge=0, le=100_000),
     db: Session = Depends(get_db),
 ) -> list[LaboratoryRead]:
     """Return the department's important laboratories."""

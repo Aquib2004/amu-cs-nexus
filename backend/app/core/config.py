@@ -35,6 +35,14 @@ class Settings(BaseSettings):
     # would hold the request open and amplify load on a struggling provider.
     llm_timeout_seconds: float = 20.0
     llm_max_retries: int = 2
+    # Semantic search relevance. Raw cosine similarity alone is not a usable
+    # relevance signal: measured on the real corpus, an unrelated query still
+    # scores ~0.50 because embedding models place all English text in a narrow
+    # band. A semantic hit therefore has to clear BOTH an absolute floor and a
+    # margin above this query's own median similarity, so nonsense queries
+    # return nothing instead of the "least unrelated" chunk.
+    search_semantic_floor: float = 0.55
+    search_semantic_margin: float = 0.05
     embedding_provider: str | None = None
     embedding_api_key: str | None = None
     redis_url: str | None = None

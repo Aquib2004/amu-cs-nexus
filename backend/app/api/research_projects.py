@@ -14,7 +14,7 @@ router = APIRouter(prefix="/research-projects", tags=["research"])
 @router.get("", response_model=list[ResearchProjectRead])
 def list_research_projects(
     limit: int = Query(50, ge=1, le=100),
-    offset: int = 0,
+    offset: int = Query(0, ge=0, le=100_000),
     status: str | None = Query(None, max_length=20),
     db: Session = Depends(get_db),
 ) -> list[ResearchProjectRead]:

@@ -5,7 +5,7 @@
 
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
@@ -17,8 +17,8 @@ router = APIRouter(prefix="/notices", tags=["notices"])
 
 @router.get("", response_model=list[NoticeRead])
 def list_notices(
-    limit: int = 20,
-    offset: int = 0,
+    limit: int = Query(20, ge=1, le=100),
+    offset: int = Query(0, ge=0, le=100_000),
     db: Session = Depends(get_db),
 ) -> list[NoticeRead]:
     """Return recent notices, newest first."""

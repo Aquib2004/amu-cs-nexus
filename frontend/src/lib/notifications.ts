@@ -1,7 +1,7 @@
 // Opt-in helpers for AMU notice Web Push. No permission is requested until the
 // student explicitly presses the enable button.
 
-import { API_BASE_URL } from "@/lib/api";
+import { requestJson } from "@/lib/api";
 
 interface VapidResponse { enabled: boolean; public_key: string | null }
 
@@ -19,9 +19,15 @@ export function notificationsSupported(): boolean {
 }
 
 export async function getVapidConfiguration(): Promise<VapidResponse> {
-  const response = await fetch(`${API_BASE_URL}/api/notifications/vapid-public-key`);
-  if (!response.ok) throw new Error("Notification settings are unavailable.");
-  return (await response.json()) as VapidResponse;
+  const config = await requestJson<VapidResponse>(
+    "/api/notifications/vapid-public-key",
+    undefined,
+    "Loading notification settings"
+  );
+  if (typeof config?.enabled !== "boolean") {
+    throw new Error("Notification settings are unavailable.");
+  }
+  return config;
 }
 
 export async function enableNotifications(): Promise<void> {
@@ -36,12 +42,15 @@ export async function enableNotifications(): Promise<void> {
     userVisibleOnly: true,
     applicationServerKey: urlBase64ToArrayBuffer(config.public_key),
   });
-  const response = await fetch(`${API_BASE_URL}/api/notifications/subscriptions`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(subscription.toJSON()),
-  });
-  if (!response.ok) throw new Error("Could not save the notification subscription.");
+  await requestJson<unknown>(
+    "/api/notifications/subscriptions",
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(subscription.toJSON()),
+    },
+    "Saving the notification subscription"
+  );
 }
 
 export async function disableNotifications(): Promise<void> {
@@ -50,8 +59,15 @@ export async function disableNotifications(): Promise<void> {
   if (!subscription) return;
   await subscription.unsubscribe();
   // The server may already have expired this endpoint; local opt-out still succeeds.
-  const response = await fetch(`${API_BASE_URL}/api/notifications/subscriptions/by-endpoint?endpoint=${encodeURIComponent(subscription.endpoint)}`, {
-    method: "DELETE",
-  });
-  if (!response.ok && response.status !== 404) throw new Error("Could not disable server notifications.");
+  const endpoint = encodeURIComponent(subscription.endpoint);
+  try {
+    await requestJson<unknown>(
+      `/api/notifications/subscriptions/by-endpoint?endpoint=${endpoint}`,
+      { method: "DELETE" },
+      "Disabling server notifications"
+    );
+  } catch (error) {
+    if (error instanceof Error && "status" in error && (error as { status: number }).status === 404) return;
+    throw error;
+  }
 }

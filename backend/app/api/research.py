@@ -13,7 +13,7 @@ router = APIRouter(prefix="/research", tags=["research"])
 @router.get("", response_model=list[DocumentListItem])
 def list_research(
     limit: int = Query(20, ge=1, le=50),
-    offset: int = 0,
+    offset: int = Query(0, ge=0, le=100_000),
     db: Session = Depends(get_db),
 ) -> list[DocumentListItem]:
     """Return documents classified as research or publication."""

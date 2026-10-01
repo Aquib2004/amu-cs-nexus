@@ -14,7 +14,7 @@ router = APIRouter(prefix="/programs", tags=["programs"])
 @router.get("", response_model=list[ProgramRead])
 def list_programs(
     limit: int = Query(50, ge=1, le=100),
-    offset: int = 0,
+    offset: int = Query(0, ge=0, le=100_000),
     level: str | None = Query(None, max_length=20),
     db: Session = Depends(get_db),
 ) -> list[ProgramRead]:

@@ -6,6 +6,8 @@ export interface HealthResponse {
   application: string;
   version: string;
   environment: string;
+  // "ok" when the database probe succeeded, "unavailable" when degraded.
+  database: string;
 }
 
 // Matches one item returned by GET /api/notices on the backend.
