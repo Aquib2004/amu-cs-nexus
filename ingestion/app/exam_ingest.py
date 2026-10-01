@@ -89,9 +89,9 @@ def discover(client: httpx.Client) -> list[dict]:
 def _embedder():
     try:
         from ai.providers.gemini_embed import GeminiEmbedder
-        from app.core.config import settings
+        from app.core.config import gemini_embedding_key
 
-        key = settings.embedding_api_key or settings.gemini_api_key or settings.llm_api_key
+        key = gemini_embedding_key()
         return GeminiEmbedder(api_key=key) if key else None
     except Exception:
         logger.warning("Exam resources will be stored without new embeddings", exc_info=True)
@@ -103,7 +103,7 @@ def run(embedding: bool = True) -> int:
     embedder = _embedder() if embedding else None
     written = 0
     try:
-        with httpx.Client(timeout=30, follow_redirects=True, verify=False,
+        with httpx.Client(timeout=30, follow_redirects=True,
                            headers={"User-Agent": "AMUCS-Nexus exam resource sync"}) as client:
             resources = discover(client)
         texts = [f"{item['title']}. {item['description']}" for item in resources]

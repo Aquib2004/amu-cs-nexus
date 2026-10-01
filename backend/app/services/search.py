@@ -17,7 +17,7 @@ from ai.retrieval import hybrid as hybrid_alg
 from ai.retrieval import keyword as keyword_alg
 from ai.retrieval.scoring import cosine_similarity
 
-from app.core.config import settings
+from app.core.config import gemini_embedding_key
 from app.models.document import Chunk, Document
 from app.schemas.search import SearchResult
 
@@ -39,7 +39,7 @@ def _hash_query_vector(text: str) -> list[float]:
 
 def _real_query_vector(text: str) -> list[float] | None:
     """Embed the query with the production embedder when configured."""
-    key = settings.llm_api_key or settings.gemini_api_key
+    key = gemini_embedding_key()
     if not key:
         return None
     try:

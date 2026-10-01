@@ -22,7 +22,6 @@ r = httpx.get(
     "https://generativelanguage.googleapis.com/v1beta/models",
     headers={"x-goog-api-key": key},
     timeout=30,
-    verify=False,
 )
 print("status:", r.status_code)
 if r.status_code != 200:

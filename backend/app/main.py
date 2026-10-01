@@ -46,16 +46,46 @@ async def _notice_loop() -> None:
         await asyncio.sleep(settings.notice_sync_interval_seconds)
 
 
+async def _upload_cleanup_loop() -> None:
+    from app.core.database import SessionLocal
+    from app.services.uploads import purge_expired_uploads
+
+    while True:
+        await asyncio.sleep(settings.upload_cleanup_interval_seconds)
+        session = SessionLocal()
+        try:
+            removed = await asyncio.to_thread(purge_expired_uploads, session)
+            if removed:
+                logging.getLogger(__name__).info("Purged %d expired upload(s)", removed)
+        except Exception:
+            logging.getLogger(__name__).exception("Expired-upload cleanup failed")
+        finally:
+            session.close()
+
+
 @asynccontextmanager
 async def lifespan(_: FastAPI):
-    task = None
+    from app.core.database import SessionLocal
+    from app.services.uploads import purge_expired_uploads
+
+    notice_task = None
+    cleanup_task = None
     if settings.notice_sync_enabled:
-        task = asyncio.create_task(_notice_loop())
+        notice_task = asyncio.create_task(_notice_loop())
+    cleanup_task = asyncio.create_task(_upload_cleanup_loop())
+    # Remove already-expired uploads immediately on startup, then continue on
+    # the interval above. This keeps privacy guarantees independent of notice sync.
+    startup_session = SessionLocal()
+    try:
+        await asyncio.to_thread(purge_expired_uploads, startup_session)
+    finally:
+        startup_session.close()
     yield
-    if task:
-        task.cancel()
-        with contextlib.suppress(asyncio.CancelledError):
-            await task
+    for task in (notice_task, cleanup_task):
+        if task:
+            task.cancel()
+            with contextlib.suppress(asyncio.CancelledError):
+                await task
 
 
 setup_logging(settings.log_level)

@@ -24,16 +24,33 @@ from app.models.notice import Notice  # noqa: E402
 
 logger = logging.getLogger("ingest_real")
 
-# Placeholder names from the old seed script - delete so only real AMU staff remain.
+# Known legacy sample rows only. Never delete the whole live notice table:
+# ingestion may fail after cleanup, and real notices must survive a failed run.
 PLACEHOLDER_NAMES = ["Prof. A. Rahman", "Dr. S. Begum", "Dr. M. Fahad", "Ms. N. Aziz"]
+PLACEHOLDER_NOTICE_TITLES = [
+    "Mid-semester examination schedule",
+    "Photographs invited for Sports Festival",
+]
+PLACEHOLDER_DOCUMENT_TITLES = [
+    "MCA Admission Notice",
+    "Computer Vision Laboratory",
+    "BCA/BSc Programme Syllabus",
+    "Department Laboratories and Facilities",
+    "Admissions Information (official)",
+    "A Survey of Vision Transformers in Medical Imaging",
+]
 
 
-def clear_sample_data() -> None:
-    session = SessionLocal()
+def clear_sample_data(session: Session | None = None) -> None:
+    owns_session = session is None
+    session = session or SessionLocal()
     try:
         # Seed documents never had content hashes; real ingestion always sets them.
         seed_ids = session.execute(
-            sa.select(Document.id).where(Document.content_hash.is_(None))
+            sa.select(Document.id).where(
+                Document.content_hash.is_(None),
+                Document.title.in_(PLACEHOLDER_DOCUMENT_TITLES),
+            )
         ).scalars().all()
         deleted_chunks = 0
         for doc_id in seed_ids:
@@ -45,7 +62,9 @@ def clear_sample_data() -> None:
             session.query(Document).filter(Document.id.in_(seed_ids)).delete(
                 synchronize_session=False
             )
-        deleted_notices = session.query(Notice).delete()
+        deleted_notices = session.query(Notice).filter(
+            Notice.title.in_(PLACEHOLDER_NOTICE_TITLES)
+        ).delete(synchronize_session=False)
         removed_faculty = 0
         for name in PLACEHOLDER_NAMES:
             removed_faculty += session.query(Faculty).filter(Faculty.name == name).delete(
@@ -55,7 +74,8 @@ def clear_sample_data() -> None:
         logger.info("cleaned seed data: chunks=%d documents=%d notices=%d placeholder_faculty=%d",
                     deleted_chunks, deleted_docs, deleted_notices, removed_faculty)
     finally:
-        session.close()
+        if owns_session:
+            session.close()
 
 
 def main() -> None:

@@ -1,10 +1,3 @@
-"use client";
-
-import { useEffect, useState } from "react";
-
-import { getHealth } from "@/services/health";
-import type { HealthResponse } from "@/types";
-
 const FEATURES: { title: string; href: string; blurb: string }[] = [
   {
     title: "YouRobo",
@@ -59,17 +52,6 @@ const FEATURES: { title: string; href: string; blurb: string }[] = [
 ];
 
 export default function Home() {
-  const [health, setHealth] = useState<HealthResponse | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    getHealth()
-      .then(setHealth)
-      .catch((err: unknown) =>
-        setError(err instanceof Error ? err.message : "Unknown error")
-      );
-  }, []);
-
   return (
     <main>
       <section className="hero">
@@ -98,36 +80,6 @@ export default function Home() {
         ))}
       </section>
 
-      <section className="card" style={{ marginTop: "1.6rem" }}>
-        <h2>Backend status</h2>
-        {error ? (
-          <p className="error">
-            Could not reach the backend: {error}. Start it with `uvicorn
-            app.main:app` in the backend folder.
-          </p>
-        ) : health ? (
-          <dl className="status-grid">
-            <div>
-              <dt>Status</dt>
-              <dd>{health.status}</dd>
-            </div>
-            <div>
-              <dt>Application</dt>
-              <dd>{health.application}</dd>
-            </div>
-            <div>
-              <dt>Version</dt>
-              <dd>{health.version}</dd>
-            </div>
-            <div>
-              <dt>Environment</dt>
-              <dd>{health.environment}</dd>
-            </div>
-          </dl>
-        ) : (
-          <p className="loading">Checking backend&hellip;</p>
-        )}
-      </section>
     </main>
   );
 }

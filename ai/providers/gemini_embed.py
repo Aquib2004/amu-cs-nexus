@@ -44,7 +44,7 @@ class GeminiEmbedder:
     """Small, typed wrapper around Gemini's embedContent/batchEmbedContents.
 
     Injectable `transport` lets tests stub network calls; without one we use a
-    real httpx.Client (SSL verification off so the sandbox can reach Google).
+    normal TLS-verifying `httpx.Client`.
     """
 
     def __init__(
@@ -67,7 +67,7 @@ class GeminiEmbedder:
     def _client(self) -> httpx.Client:
         if self._transport is not None:
             return httpx.Client(transport=self._transport)
-        return httpx.Client(verify=False)
+        return httpx.Client()
 
     def _post(self, url: str, body: dict) -> httpx.Response:
         last_error: Exception | None = None

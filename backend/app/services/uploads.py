@@ -16,7 +16,7 @@ from uuid import UUID
 from sqlalchemy import delete
 from sqlalchemy.orm import Session
 
-from app.core.config import settings
+from app.core.config import gemini_embedding_key, settings
 from app.models.chat_upload import ChatUpload, ChatUploadChunk
 from app.services.knowledge import KnowledgeHit, _score, _tokens
 
@@ -136,7 +136,7 @@ def extract_text(filename: str, content_type: str, data: bytes) -> str:
     return text[:MAX_TEXT_CHARS]
 
 def _embed(texts: list[str]) -> list[list[float]] | None:
-    key = settings.embedding_api_key or settings.llm_api_key or settings.gemini_api_key
+    key = gemini_embedding_key()
     if not key:
         return None
     try:
@@ -196,7 +196,7 @@ def get_authorized_upload(session: Session, upload_id: UUID, token: str | None) 
 
 def search_upload(upload: ChatUpload, query: str, limit: int = 8) -> list[KnowledgeHit]:
     query_vector = None
-    key = settings.embedding_api_key or settings.llm_api_key or settings.gemini_api_key
+    key = gemini_embedding_key()
     if key and any(chunk.embedding for chunk in upload.chunks):
         try:
             from ai.providers.gemini_embed import GeminiEmbedder
@@ -233,6 +233,9 @@ def delete_upload(session: Session, upload_id: UUID, token: str) -> None:
 
 
 def purge_expired_uploads(session: Session) -> int:
-    result = session.execute(delete(ChatUpload).where(ChatUpload.expires_at <= datetime.now(timezone.utc)))
+    # SQLite stores DateTime columns without timezone information. Use a naive
+    # UTC cutoff so SQLAlchemy does not compare naive and aware datetimes.
+    cutoff = datetime.now(timezone.utc).replace(tzinfo=None)
+    result = session.execute(delete(ChatUpload).where(ChatUpload.expires_at <= cutoff))
     session.commit()
     return int(result.rowcount or 0)

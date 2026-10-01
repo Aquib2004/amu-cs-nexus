@@ -56,7 +56,6 @@ class AmuClient:
         self._client = httpx.Client(
             timeout=timeout,
             follow_redirects=True,
-            verify=False,
             headers={"User-Agent": "Mozilla/5.0 (amu-cs-nexus ingest)"},
         )
 
@@ -451,9 +450,9 @@ class _BatchedEmbedder:
         if self._embedder is None:
             from ai.providers import ProviderError
             from ai.providers.gemini_embed import GeminiEmbedder
-            from app.core.config import settings
+            from app.core.config import gemini_embedding_key
 
-            key = settings.llm_api_key or settings.gemini_api_key
+            key = gemini_embedding_key()
             if not key:
                 raise ProviderError("no key")
             self._embedder = GeminiEmbedder(api_key=key)

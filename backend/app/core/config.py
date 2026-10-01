@@ -42,6 +42,7 @@ class Settings(BaseSettings):
     # Student-uploaded files are private, token-protected, and automatically
     # discarded. Only extracted text is retained.
     upload_expiry_hours: int = 24
+    upload_cleanup_interval_seconds: int = 300
 
     # Anonymous opt-in Web Push. Generate VAPID keys with py_vapid; the private
     # key belongs in the untracked backend .env and is never returned to browsers.
@@ -58,3 +59,19 @@ class Settings(BaseSettings):
 
 # A single, shared settings instance used across the application.
 settings = Settings()
+
+
+def gemini_embedding_key() -> str | None:
+    """Return a Gemini embedding key without confusing it with a Groq key.
+
+    Older local configs stored the Gemini key in LLM_API_KEY while switching
+    chat to Groq. That key is accepted only when it differs from GROQ_API_KEY;
+    an explicit GEMINI_API_KEY or EMBEDDING_API_KEY always wins.
+    """
+    if settings.embedding_api_key:
+        return settings.embedding_api_key
+    if settings.gemini_api_key:
+        return settings.gemini_api_key
+    if settings.llm_api_key and settings.llm_api_key != settings.groq_api_key:
+        return settings.llm_api_key
+    return None

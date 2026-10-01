@@ -54,7 +54,7 @@ def _parse(row: dict) -> dict | None:
 def sync_notices(session: Session, client: httpx.Client | None = None) -> list[Notice]:
     """Upsert the first notice page and return only newly-created notices."""
     owns_client = client is None
-    client = client or httpx.Client(timeout=30, verify=False, follow_redirects=True,
+    client = client or httpx.Client(timeout=30, follow_redirects=True,
                                    headers={"User-Agent": "AMUCS-Nexus notice sync"})
     created: list[Notice] = []
     try:

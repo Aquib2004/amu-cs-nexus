@@ -137,6 +137,20 @@ def test_private_text_upload_can_be_questioned_and_deleted() -> None:
         assert db.get(ChatUpload, UUID(upload["id"])) is None
 
 
+def test_gemini_embedding_key_never_reuses_groq_key(monkeypatch) -> None:
+    from app.core import config
+
+    monkeypatch.setattr(config.settings, "embedding_api_key", None)
+    monkeypatch.setattr(config.settings, "gemini_api_key", None)
+    monkeypatch.setattr(config.settings, "llm_api_key", "legacy-gemini-key")
+    monkeypatch.setattr(config.settings, "groq_api_key", "legacy-gemini-key")
+    assert config.gemini_embedding_key() is None
+    monkeypatch.setattr(config.settings, "groq_api_key", "different-groq-key")
+    assert config.gemini_embedding_key() == "legacy-gemini-key"
+    monkeypatch.setattr(config.settings, "gemini_api_key", "explicit-gemini-key")
+    assert config.gemini_embedding_key() == "explicit-gemini-key"
+
+
 def test_notice_sync_creates_only_new_rows() -> None:
     payload = {"data": {"data": [{
         "title": "New examination schedule",
@@ -151,3 +165,37 @@ def test_notice_sync_creates_only_new_rows() -> None:
             assert created[0].category == "examinations"
             assert sync_notices(db, remote) == []
             assert db.scalar(select(Notice).where(Notice.title == "New examination schedule")) is not None
+
+
+def test_expired_upload_is_purged_without_notice_sync() -> None:
+    from app.services.uploads import purge_expired_uploads
+
+    with Session(_engine) as db:
+        expired = ChatUpload(
+            access_token_hash="expired-hash",
+            filename="expired.txt",
+            content_type="text/plain",
+            size_bytes=10,
+            expires_at=datetime(2020, 1, 1),
+        )
+        db.add(expired)
+        db.commit()
+        expired_id = expired.id
+        assert purge_expired_uploads(db) == 1
+        db.expunge_all()
+        with Session(_engine) as fresh:
+            assert fresh.get(ChatUpload, expired_id) is None
+
+
+def test_real_notice_survives_sample_cleanup() -> None:
+    from scripts.ingest_real import clear_sample_data
+
+    with Session(_engine) as db:
+        real = Notice(title="Real AMU notice", url="https://amu.ac.in/real-notice", category="general")
+        sample = Notice(title="Mid-semester examination schedule", url="https://amu.ac.in/sample", category="examinations")
+        db.add_all([real, sample])
+        db.commit()
+        real_id, sample_id = real.id, sample.id
+        clear_sample_data(db)
+        assert db.get(Notice, real_id) is not None
+        assert db.get(Notice, sample_id) is None
