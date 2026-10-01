@@ -45,6 +45,11 @@ class Settings(BaseSettings):
     search_semantic_margin: float = 0.05
     embedding_provider: str | None = None
     embedding_api_key: str | None = None
+    # --- Outbound TLS trust store ---
+    # The AMU API omits its GlobalSign intermediate from the handshake, so the
+    # default "platform" store (OS trust store) is used instead of certifi's
+    # bundled roots. Verification is always enabled; see app/core/tls.py.
+    tls_trust: str = "platform"
     redis_url: str | None = None
 
     # Student-uploaded files are private, token-protected, and automatically

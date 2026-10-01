@@ -26,6 +26,7 @@ from app.api.staff import router as staff_router
 from app.core.config import settings
 from app.core.errors import register_error_handlers
 from app.core.logging import setup_logging
+from app.core.tls import describe_tls
 
 
 logger = logging.getLogger(__name__)
@@ -132,6 +133,7 @@ def _log_optional_features() -> None:
         logger.info("Embedding provider key not set; storing raw text chunks")
     if not (settings.vapid_private_key or settings.vapid_private_key_file):
         logger.info("Web Push notifications disabled")
+    logger.info("Outbound TLS trust store: %s (verification enabled)", describe_tls())
 
 
 app = FastAPI(title=settings.project_name, version=settings.version, lifespan=lifespan)

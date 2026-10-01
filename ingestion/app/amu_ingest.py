@@ -28,6 +28,7 @@ for _p in (str(ROOT), str(BACKEND)):
 from sqlalchemy.orm import Session  # noqa: E402
 
 from app.core.database import SessionLocal  # noqa: E402
+from app.core.tls import tls_context  # noqa: E402
 from app.models.document import Chunk, Document  # noqa: E402
 from app.models.faculty import Faculty  # noqa: E402
 from app.models.ingestion_log import IngestionLog  # noqa: E402
@@ -53,9 +54,11 @@ class AmuClient:
     """Thin reader over the public AMU JSON API."""
 
     def __init__(self, timeout: float = 30.0) -> None:
+        # The AMU API omits its GlobalSign intermediate from the handshake.
         self._client = httpx.Client(
             timeout=timeout,
             follow_redirects=True,
+            verify=tls_context(),
             headers={"User-Agent": "Mozilla/5.0 (amu-cs-nexus ingest)"},
         )
 

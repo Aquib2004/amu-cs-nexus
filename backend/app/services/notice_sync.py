@@ -7,6 +7,7 @@ from datetime import datetime, timezone
 import httpx
 from sqlalchemy.orm import Session
 
+from app.core.tls import tls_context
 from app.models.document import Chunk, Document
 from app.models.notice import Notice
 from app.services.push import send_notice_notifications
@@ -54,7 +55,9 @@ def _parse(row: dict) -> dict | None:
 def sync_notices(session: Session, client: httpx.Client | None = None) -> list[Notice]:
     """Upsert the first notice page and return only newly-created notices."""
     owns_client = client is None
-    client = client or httpx.Client(timeout=30, follow_redirects=True,
+    # The AMU API omits its GlobalSign intermediate from the handshake, so the
+    # shared platform trust store is required for verification to succeed.
+    client = client or httpx.Client(timeout=30, follow_redirects=True, verify=tls_context(),
                                    headers={"User-Agent": "AMUCS-Nexus notice sync"})
     created: list[Notice] = []
     try:

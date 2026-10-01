@@ -7,15 +7,26 @@ pages. It never invents an exam date, schedule, result, or question paper.
 import hashlib
 import logging
 import re
+import sys
 from datetime import datetime, timezone
 from html.parser import HTMLParser
+from pathlib import Path
 from urllib.parse import urljoin, urlparse
 
 import httpx
 
-from app.core.database import SessionLocal
-from app.models.document import Chunk, Document
-from app.models.exam_resource import ExamResource
+# This module lives in the `ingestion/app` package, which shadows the backend
+# `app` package. Put the repository root and backend/ on sys.path first so the
+# backend imports below resolve to app.core.* rather than ingestion/app/*.
+_ROOT = Path(__file__).resolve().parents[2]
+for _p in (str(_ROOT), str(_ROOT / "backend")):
+    if _p not in sys.path:
+        sys.path.insert(0, _p)
+
+from app.core.database import SessionLocal  # noqa: E402
+from app.core.tls import tls_context  # noqa: E402
+from app.models.document import Chunk, Document  # noqa: E402
+from app.models.exam_resource import ExamResource  # noqa: E402
 
 logger = logging.getLogger(__name__)
 COE = "https://www.amucontrollerexams.com"
@@ -103,7 +114,7 @@ def run(embedding: bool = True) -> int:
     embedder = _embedder() if embedding else None
     written = 0
     try:
-        with httpx.Client(timeout=30, follow_redirects=True,
+        with httpx.Client(timeout=30, follow_redirects=True, verify=tls_context(),
                            headers={"User-Agent": "AMUCS-Nexus exam resource sync"}) as client:
             resources = discover(client)
         texts = [f"{item['title']}. {item['description']}" for item in resources]
