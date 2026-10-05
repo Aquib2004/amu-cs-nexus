@@ -1,0 +1,45 @@
+# Render blueprint for the AMUCS Nexus API.
+#
+# Deploy with:  https://render.com/deploy?repo=https://github.com/Aquib2004/amu-cs-nexus
+#
+# IMPORTANT: the free plan uses an EPHEMERAL filesystem, so the SQLite file is
+# wiped on every deploy and redeploy. That is acceptable here because
+# bootstrap_deploy.py repopulates the database from the bundled snapshot on each
+# boot, and the corpus is public, read-only AMU content.
+#
+# The VAPID private key is intentionally NOT set: Web Push is optional and a
+# missing key simply disables the feature.
+
+services:
+  - type: web
+    name: amucs-nexus-api
+    runtime: python
+    plan: free
+    rootDir: backend
+    buildCommand: >-
+      pip install -r requirements.txt
+      && python -m alembic upgrade head
+      && python ../scripts/bootstrap_deploy.py
+    startCommand: >-
+      gunicorn app.main:app
+      --worker-class uvicorn.workers.UvicornWorker
+      --workers 2
+      --bind 0.0.0.0:$PORT
+      --timeout 120
+    healthCheckPath: /api/health
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: DATABASE_URL
+        value: sqlite:///./amucs_nexus_prod.db
+      - key: CORS_ORIGINS
+        # Replace with your deployed frontend origin, e.g. https://amucs-nexus.vercel.app
+        value: http://localhost:3000
+      - key: AMU_TLS_TRUST
+        value: platform
+      - key: NOTICE_SYNC_ENABLED
+        value: "false"
+      # Set these in the Render dashboard (never commit real keys):
+      # - key: GROQ_API_KEY
+      # - key: GEMINI_API_KEY   (embeddings)
+      # - key: VAPID_PRIVATE_KEY

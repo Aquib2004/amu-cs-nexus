@@ -63,15 +63,29 @@ async def _upload_cleanup_loop() -> None:
 
     while True:
         await asyncio.sleep(settings.upload_cleanup_interval_seconds)
-        session = SessionLocal()
+        # Opening the session inside its own try is deliberate: if
+        # SessionLocal() itself raises, this loop must keep running. Otherwise a
+        # single failure silently kills the task and expired uploads accumulate
+        # forever, which is a privacy failure and not merely a performance one.
+        try:
+            session = SessionLocal()
+        except Exception:
+            logging.getLogger(__name__).exception(
+                "Could not open a database session for upload cleanup"
+            )
+            continue
         try:
             removed = await asyncio.to_thread(purge_expired_uploads, session)
             if removed:
                 logging.getLogger(__name__).info("Purged %d expired upload(s)", removed)
+        except asyncio.CancelledError:
+            session.close()
+            raise
         except Exception:
             logging.getLogger(__name__).exception("Expired-upload cleanup failed")
         finally:
             session.close()
+
 
 
 @asynccontextmanager

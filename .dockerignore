@@ -1,4 +1,19 @@
-node_modules
-.next
+# Keep the build context small and never ship secrets or local artefacts.
+.git
+.github
+**/.venv
+**/node_modules
+**/.next
+**/__pycache__
+**/.pytest_cache
+**/*.log
 .env
-.DS_Store
+**/.env
+*.db
+*.sqlite3
+*.pem
+*.key
+projectamunexus
+backend/server.log
+frontend/dev.log
+data/*.tmp

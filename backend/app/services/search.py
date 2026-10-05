@@ -23,7 +23,6 @@ from app.schemas.search import SearchResult
 
 # Development/test deterministic embedder matching ingestion HashEmbedder(384).
 _DIMS = 384
-_SEM_EPSILON = 0.001
 
 _log = __import__("logging").getLogger(__name__)
 
@@ -87,27 +86,54 @@ def search_chunks(
     # --- semantic: real query vector (dims match stored) or hash-per-chunk ---
     query_real = _real_query_vector(query)
     query_hash = _hash_query_vector(query)
+    # Decide the scoring mode for the WHOLE corpus up front. Deciding per chunk
+    # can mix real-embedding scores with hash scores and then gate them with the
+    # real-embedding threshold, which is meaningless: a deployment loaded from
+    # the JSON snapshot has no stored vectors, so every chunk hashes even when a
+    # provider key is configured.
+    use_real = query_real is not None and any(
+        (r.Chunk.embedding) and len(r.Chunk.embedding) == len(query_real)
+        for r in rows
+    )
     sem_scored: list[tuple[str, float]] = []
     for r in rows:
         chunk = r.Chunk
         stored = chunk.embedding or []
-        if query_real is not None and stored and len(stored) == len(query_real):
+        if use_real and stored and len(stored) == len(query_real):
             score = cosine_similarity(query_real, stored)
         else:
             score = cosine_similarity(query_hash, _hash_query_vector(chunk.text))
         sem_scored.append((str(chunk.id), score))
 
-    # Semantic hits must clear an absolute floor AND stand out from this
-    # query's own baseline. Without the margin test every query "matches".
+    # Relevance gating.
+    #
+    # Real embeddings are a usable relevance signal, so a semantic hit may stand
+    # on its own once it clears an absolute floor AND stands out from this
+    # query's own median.
+    #
+    # The deterministic hash embedder is NOT. It hashes tokens into 384 CRC32
+    # buckets, so unrelated text collides by chance: measured on this corpus,
+    # "zzzznothing" collided with "Syllabus Review Committee" at 0.577 while the
+    # genuine query "vision" only scored 0.289. A floor calibrated for real
+    # embeddings therefore admits pure noise and rejects real matches, so hash
+    # similarity is used to RE-RANK keyword hits only and never to create them.
     if sem_scored:
         scores = sorted((score for _, score in sem_scored), reverse=True)
         median = scores[len(scores) // 2]
-        threshold = max(
-            settings.search_semantic_floor,
-            median + settings.search_semantic_margin,
-        )
-        sem_scored = [(rid, score) for rid, score in sem_scored if score >= threshold]
-        relevant.update(rid for rid, _ in sem_scored)
+        if use_real:
+            threshold = max(
+                settings.search_semantic_floor,
+                median + settings.search_semantic_margin,
+            )
+            sem_scored = [(rid, score) for rid, score in sem_scored if score >= threshold]
+            relevant.update(rid for rid, _ in sem_scored)
+        else:
+            # Hash path: keep every chunk for ranking, but add none to `relevant`.
+            sem_scored = [
+                (rid, score)
+                for rid, score in sem_scored
+                if score >= median + settings.search_semantic_margin
+            ]
     sem_scored.sort(key=lambda pair: pair[1], reverse=True)
 
     if not relevant:

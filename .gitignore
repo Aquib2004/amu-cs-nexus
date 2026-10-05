@@ -69,3 +69,11 @@ pgdata/
 # TypeScript incremental build info
 *.tsbuildinfo
 
+
+# Windows shortcuts / local scratch
+*.lnk
+# Local server logs
+backend/server.log
+backend/prod.log
+backend/dev2.log
+frontend/dev.log
