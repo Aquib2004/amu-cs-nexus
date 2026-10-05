@@ -23,7 +23,7 @@ from app.api.research import router as research_router
 from app.api.research_projects import router as research_projects_router
 from app.api.search import router as search_router
 from app.api.staff import router as staff_router
-from app.core.config import settings
+from app.core.config import gemini_embedding_key, settings
 from app.core.errors import register_error_handlers
 from app.core.logging import setup_logging
 from app.core.tls import describe_tls
@@ -129,8 +129,10 @@ def _log_optional_features() -> None:
     """Log which optional integrations are disabled so ops can see the state."""
     if not (settings.llm_api_key or settings.gemini_api_key or settings.groq_api_key):
         logger.info("LLM provider keys not set; using extractive fallback")
-    if not (settings.embedding_api_key or settings.gemini_api_key):
+    if not gemini_embedding_key():
         logger.info("Embedding provider key not set; storing raw text chunks")
+    else:
+        logger.info("Embedding provider key detected; chunks are embedded on ingest")
     if not (settings.vapid_private_key or settings.vapid_private_key_file):
         logger.info("Web Push notifications disabled")
     logger.info("Outbound TLS trust store: %s (verification enabled)", describe_tls())
