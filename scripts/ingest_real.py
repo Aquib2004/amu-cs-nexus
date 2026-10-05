@@ -16,6 +16,7 @@ for _p in (str(ROOT), str(BACKEND)):
         sys.path.insert(0, _p)
 
 import sqlalchemy as sa  # noqa: E402
+from sqlalchemy.orm import Session  # noqa: E402
 
 from app.core.database import SessionLocal  # noqa: E402
 from app.models.document import Chunk, Document  # noqa: E402
