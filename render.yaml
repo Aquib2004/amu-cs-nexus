@@ -33,8 +33,11 @@ services:
       - key: DATABASE_URL
         value: sqlite:///./amucs_nexus_prod.db
       - key: CORS_ORIGINS
-        # Replace with your deployed frontend origin, e.g. https://amucs-nexus.vercel.app
-        value: http://localhost:3000
+        # Comma-separated. A request origin must match exactly (scheme + host +
+        # port), otherwise the browser gets no access-control-allow-origin and
+        # every API call from the frontend fails. Must be updated whenever the
+        # frontend origin changes.
+        value: https://amu-cs-nexus-2dt6puysf-acme-c82b.vercel.app
       - key: AMU_TLS_TRUST
         value: platform
       - key: NOTICE_SYNC_ENABLED
