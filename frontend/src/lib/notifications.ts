@@ -14,7 +14,18 @@ function urlBase64ToArrayBuffer(value: string): ArrayBuffer {
   return bytes.buffer;
 }
 
+/**
+ * Whether this browser can show Web Push notifications.
+ *
+ * Must be safe to call while rendering on the server: `navigator` does not
+ * exist during prerendering, so an unguarded check crashes the build with
+ * "ReferenceError: navigator is not defined". It also returns false on the
+ * server so the first client render matches the server HTML.
+ */
 export function notificationsSupported(): boolean {
+  if (typeof window === "undefined" || typeof navigator === "undefined") {
+    return false;
+  }
   return "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
 }
 

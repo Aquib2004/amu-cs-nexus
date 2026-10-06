@@ -13,6 +13,10 @@ export default function NoticesPage() {
   const [alertsEnabled, setAlertsEnabled] = useState(false);
   const [alertBusy, setAlertBusy] = useState(false);
   const [alertMessage, setAlertMessage] = useState<string | null>(null);
+  // Capability is resolved after mount rather than during render: the server has no
+  // navigator, so reading it during render both breaks prerendering and would make
+  // the first client render differ from the server HTML.
+  const [canNotify, setCanNotify] = useState(false);
 
   useEffect(() => {
     getNotices({ limit: 50 })
@@ -22,13 +26,17 @@ export default function NoticesPage() {
   }, []);
 
   useEffect(() => {
-    if (notificationsSupported() && Notification.permission === "granted") {
+    setCanNotify(notificationsSupported());
+  }, []);
+
+  useEffect(() => {
+    if (canNotify && Notification.permission === "granted") {
       navigator.serviceWorker.ready
         .then((registration) => registration.pushManager.getSubscription())
         .then((subscription) => setAlertsEnabled(Boolean(subscription)))
         .catch(() => undefined);
     }
-  }, []);
+  }, [canNotify]);
 
   async function toggleAlerts() {
     setAlertBusy(true);
@@ -60,7 +68,7 @@ export default function NoticesPage() {
           <p>Opt in to browser notifications. Permission is requested only after you enable this.</p>
           {alertMessage && <span className="alert-message">{alertMessage}</span>}
         </div>
-        <button type="button" className={`btn ${alertsEnabled ? "secondary" : ""}`} onClick={() => void toggleAlerts()} disabled={alertBusy || !notificationsSupported()}>
+        <button type="button" className={`btn ${alertsEnabled ? "secondary" : ""}`} onClick={() => void toggleAlerts()} disabled={alertBusy || !canNotify}>
           {alertBusy ? "Updating…" : alertsEnabled ? "Disable alerts" : "Enable alerts"}
         </button>
       </section>
