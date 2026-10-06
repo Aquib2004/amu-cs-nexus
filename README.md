@@ -71,12 +71,28 @@ cd ingestion; .venv\Scripts\python -m pytest tests -q
 cd frontend; npx tsc --noEmit
 ```
 
+## Deploying
+
+Deployment is automated: `render.yaml` describes the API, `frontend/vercel.json` describes the frontend, and `.github/workflows/ci.yml` runs the backend, AI, ingestion and frontend jobs on every push.
+
+```bash
+# 1. API - Render blueprint, picks up render.yaml automatically
+#    https://render.com/deploy?repo=https://github.com/Aquib2004/amu-cs-nexus
+#    Set GROQ_API_KEY and GEMINI_API_KEY in the dashboard (never commit them).
+# 2. Frontend - Vercel import, Root Directory = frontend
+#    Set NEXT_PUBLIC_API_URL to the Render service URL.
+# 3. Set CORS_ORIGINS on Render to the Vercel origin, then redeploy the API.
+```
+
+Full walkthrough, including the security checklist to run before sharing the link, is in `docs/DEPLOYMENT.md`.
+
 ## Open-source status
 
 Repository designed for public collaboration. License decision pending (see `LICENSE`); contribution guidance in `CONTRIBUTING.md`; code of conduct in `CODE_OF_CONDUCT.md`. Never commit API keys, passwords, or private credentials.
 
 ## Documentation
 
+- `docs/DEPLOYMENT.md` - Render + Vercel deployment walkthrough and pre-launch security checklist.
 - `docs/architecture/system-overview.md` - system architecture.
 - `docs/development/project-status.md` - current project status.
 - `docs/requirements/` - product/functional/non-functional requirements.
