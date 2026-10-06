@@ -46,11 +46,13 @@ fine here: `bootstrap_deploy.py` repopulates from the snapshot on every boot.
 ## 3. Point the API at the frontend (required)
 
 The API's CORS allowlist is explicit, and a wildcard is rejected at startup.
-Set `CORS_ORIGINS` on Render to your Vercel origin:
+Set `CORS_ORIGINS` on Render to your Vercel origin (no trailing slash):
 
-    CORS_ORIGINS=https://amucs-nexus.vercel.app
+    CORS_ORIGINS=https://amu-cs-nexus-2dt6puysf-acme-c82b.vercel.app
 
-Then redeploy the API. Without this the browser blocks every request.
+Then redeploy the API. Without this the browser blocks every request even though
+every endpoint still returns HTTP 200 to curl — a health check cannot catch it.
+Run `python scripts/verify_live.py` to confirm the header is actually present.
 
 ## 4. Share
 
@@ -59,6 +61,26 @@ repository README:
 
     - Live app: https://<your-app>.vercel.app
     - API docs:  https://<your-api>.onrender.com/docs
+
+## 5. Verify
+
+The three failure modes below all look like "the site is up" to a server-side
+health check and only bite a real browser. Run the checker after every deploy:
+
+    python scripts/verify_live.py
+
+It exits non-zero unless all four hold, and names the fix for whichever fails:
+
+| Check | Failure means | Fix |
+| --- | --- | --- |
+| API health | API down or database empty | Render logs; confirm `bootstrap_deploy.py` ran |
+| CORS preflight | API never allowlists the frontend origin | Set `CORS_ORIGINS` on Render, redeploy |
+| Frontend public | Redirected to a login wall | Vercel → Settings → Deployment Protection → None |
+| Bundle targets API | `NEXT_PUBLIC_API_URL` missing at build time | Set it in Vercel, **redeploy** (build-time var) |
+
+Point it at different hosts with `--api` / `--frontend`. It deliberately does
+not follow redirects, because Deployment Protection answers `302` to Vercel SSO
+and a client that follows it would report the login page as a healthy `200`.
 
 ## Security checklist before going public
 
