@@ -6,9 +6,11 @@ import asyncio
 import contextlib
 import logging
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from app.api.chat import router as chat_router
 from app.api.documents import router as documents_router
@@ -184,3 +186,21 @@ app.include_router(exams_router, prefix="/api")
 app.include_router(notifications_router, prefix="/api")
 
 register_error_handlers(app)
+
+
+# --- Frontend ---------------------------------------------------------------
+# The statically exported site (frontend/out) is served from this same app, so
+# the UI and the API share one origin and the browser never issues a
+# cross-origin request. That is what makes the deployed site work without a
+# CORS_ORIGINS entry for the frontend: there is no second origin to allowlist.
+#
+# The export is committed to the repo because Render's Python runtime has no
+# Node and therefore cannot run `next build` during deploy.
+#
+# Mounted last, so every /api route above wins the match first.
+_FRONTEND_DIR = Path(__file__).resolve().parents[2] / "frontend" / "out"
+if _FRONTEND_DIR.is_dir():
+    app.mount("/", StaticFiles(directory=str(_FRONTEND_DIR), html=True), name="frontend")
+else:
+    # Local clones without a build still get a working API; only the UI 404s.
+    logger.warning("Frontend export not found at %s; serving the API only", _FRONTEND_DIR)

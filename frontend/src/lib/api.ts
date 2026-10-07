@@ -1,10 +1,19 @@
 // Base configuration for the frontend API client.
 //
 // NEXT_PUBLIC_* environment variables are inlined at build time and can be
-// set in a local .env.local file. We default to the local backend URL.
+// set in a local .env.local file.
+//
+// Production defaults to a relative base ("") because the deployed site is
+// served by the API itself: same origin, so no CORS_ORIGINS entry and no
+// NEXT_PUBLIC_API_URL are needed. Only `next dev`, where the page is served by
+// Next on :3000, falls back to the local backend URL.
 
-export const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+const EXPLICIT_BASE = process.env.NEXT_PUBLIC_API_URL;
+
+export const API_BASE_URL = (
+  EXPLICIT_BASE ??
+  (process.env.NODE_ENV === "development" ? "http://localhost:8000" : "")
+).replace(/\/+$/, "");
 
 /** Error thrown by requestJson with a message that is safe to show a user. */
 export class ApiError extends Error {

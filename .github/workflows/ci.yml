@@ -76,7 +76,12 @@ jobs:
         run: npm ci
       - working-directory: frontend
         run: npx tsc --noEmit
+      # Build exactly what ships: no NEXT_PUBLIC_API_URL, so the bundle uses the
+      # same same-origin relative base as the deployed site.
       - working-directory: frontend
         run: npm run build
-        env:
-          NEXT_PUBLIC_API_URL: http://localhost:8000
+      # The deployed site is served from this committed export (Render has no
+      # Node). If a build ever fails to write it, or `out/` returns to
+      # .gitignore, production would silently serve no UI.
+      - name: Verify the committed export is present
+        run: test -f frontend/out/index.html

@@ -34,7 +34,9 @@ dist/
 # --- Node / frontend ---
 node_modules/
 .next/
-out/
+# `out/` is intentionally NOT ignored: frontend/out is the static export that
+# FastAPI serves in production (Render has no Node, so it cannot build it).
+# Re-adding `out/` here would untrack the deployed frontend.
 dist/
 build/
 npm-debug.log*
