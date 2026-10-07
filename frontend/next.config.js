@@ -6,8 +6,11 @@ const nextConfig = {
   // `next build`). Same origin means browser CORS never applies. The export is
   // written to `out/` and committed to the repo.
   output: "export",
-  // Emit `<route>/index.html` so a plain file server resolves /chat/ itself.
-  trailingSlash: true,
+  // MUST stay false. Vercel's trailing-slash rule fires before rewrites, so
+  // `true` turned every /api request into a 308 to /api/.../ and the proxy
+  // never ran. The trade-off is that routes export as <route>.html instead of
+  // <route>/index.html, which app/main.py handles with its ".html" fallback.
+  trailingSlash: false,
   images: {
     // `next/image` optimisation needs a Node server, which the export has none.
     unoptimized: true,

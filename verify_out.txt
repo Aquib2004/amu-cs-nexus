@@ -1,0 +1,10 @@
+FAIL  API health
+      -> status=308 body=b'Redirecting...\n'
+PASS  Homepage served as HTML
+FAIL  Nested route /chat resolves
+      -> status=308 body=b'Redirecting...\n'
+FAIL  Unknown API route still returns JSON 404
+      -> status=308 body=b'Redirecting...\n'
+PASS  Bundle uses the same-origin API base
+
+2/5 checks passed
