@@ -1,23 +1,25 @@
 #!/usr/bin/env python
 r"""Verify a live AMUCS Nexus deployment end to end.
 
-Checks the three things that are invisible until a real browser loads the page,
-because each of them fails silently from the server's point of view:
+The site is served from one origin: FastAPI answers both the /api routes and
+the static export. That removes the whole class of failure this script used to
+chase - a CORS allowlist that never listed the frontend, a frontend behind
+Vercel Deployment Protection, and a bundle built without NEXT_PUBLIC_API_URL.
+There is no second origin now, so those three cannot happen.
 
-  1. The API is up and its database probe passes.
-  2. The API actually allowlists the frontend origin. A CORS misconfiguration
-     still returns HTTP 200 to the server, so "the endpoint works" says nothing
-     about whether a browser may read it.
-  3. The frontend is publicly reachable (not behind Vercel Deployment
-     Protection, which answers 302 to an SSO URL).
-  4. The frontend bundle was built with NEXT_PUBLIC_API_URL. If the variable was
-     missing at build time the client silently falls back to
-     http://localhost:8000 and every request fails only for real visitors.
+What still can happen, and is invisible to a server-side health check:
+
+  1. The API is up but its database probe fails.
+  2. The export was never deployed (Render has no Node, so frontend/out is
+     committed; if it goes missing the API still answers and the UI 404s).
+  3. The frontend middleware shadows the API, so unknown routes stop returning
+     JSON - the regression a mount caused and the backend tests caught.
+  4. The shipped bundle still points at http://localhost:8000, which only
+     fails for real visitors.
 
 Usage:
     python scripts/verify_live.py
-    python scripts/verify_live.py --api https://amucs-nexus-api.onrender.com \
-        --frontend https://amu-cs-nexus-2dt6puysf-acme-c82b.vercel.app
+    python scripts/verify_live.py --api https://amucs-nexus-api.onrender.com
 
 Exit status is 0 only when every check passes, so it is usable in CI.
 """
@@ -35,7 +37,7 @@ import urllib.request
 class _NoRedirect(urllib.request.HTTPRedirectHandler):
     """Follow no redirects.
 
-    urlopen follows 3xx automatically, so a frontend parked behind a login wall
+    urlopen follows 3xx automatically, so a service parked behind a login wall
     would hand back the login page as status 200 and look healthy. Seeing the
     redirect is the whole point of the check.
     """
@@ -47,8 +49,9 @@ class _NoRedirect(urllib.request.HTTPRedirectHandler):
 _OPENER = urllib.request.build_opener(_NoRedirect)
 
 DEFAULT_API = "https://amucs-nexus-api.onrender.com"
-DEFAULT_FRONTEND = "https://amu-cs-nexus-2dt6puysf-acme-c82b.vercel.app"
-DEFAULT_API_HOST = "amucs-nexus-api.onrender.com"
+# No trailing slash: Vercel canonicalises /chat/ to /chat with a 308, and this
+# script deliberately follows no redirects. /chat works on both origins.
+DEFAULT_PAGE = "/chat"
 TIMEOUT = 45
 
 
@@ -73,12 +76,11 @@ def _check(label: str, ok: bool, detail: str) -> bool:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Verify a live AMUCS Nexus deployment.")
-    parser.add_argument("--api", default=DEFAULT_API, help="API base URL")
-    parser.add_argument("--frontend", default=DEFAULT_FRONTEND, help="Frontend base URL")
+    parser.add_argument("--api", default=DEFAULT_API, help="Base URL the site is served from")
+    parser.add_argument("--page", default=DEFAULT_PAGE, help="Nested route to check")
     args = parser.parse_args()
 
     api = args.api.rstrip("/")
-    frontend = args.frontend.rstrip("/")
     results: list[bool] = []
 
     # 1. Health, including the live database probe.
@@ -91,63 +93,69 @@ def main() -> int:
     ok = status == 200 and health.get("status") == "ok" and health.get("database") == "ok"
     results.append(_check("API health", ok, f"status={status} body={body[:200]!r}"))
 
-    # 2. Preflight from the real frontend origin. 200 alone is not enough: the
-    #    allowed-origin header is what the browser actually inspects.
-    status, headers, _ = _get(
-        f"{api}/api/search",
-        method="OPTIONS",
-        headers={
-            "Origin": frontend,
-            "Access-Control-Request-Method": "GET",
-            "Access-Control-Request-Headers": "content-type",
-        },
-    )
-    allow_origin = next(
-        (v for k, v in headers.items() if k.lower() == "access-control-allow-origin"), ""
-    )
-    ok = allow_origin == frontend
+    # 2. The homepage must come back as HTML from that same origin. A JSON body
+    #    here means the export is not deployed and FastAPI is answering "/".
+    status, _, body = _get(f"{api}/")
+    is_html = b"<!doctype html>" in body[:300].lower() or b"<html" in body[:400].lower()
     detail = (
-        f"status={status} access-control-allow-origin={allow_origin or '<missing>'} "
-        f"expected={frontend}"
+        "the API is serving / but the export is missing - frontend/out was not deployed"
+        if status == 200 and not is_html
+        else f"status={status} body={body[:160]!r}"
     )
-    results.append(_check("CORS preflight allows the frontend origin", ok, detail))
+    results.append(_check("Homepage served as HTML", status == 200 and is_html, detail))
 
-    # 3. Frontend must be public, not redirecting to a login wall.
-    status, headers, body = _get(frontend + "/")
-    location = next((v for k, v in headers.items() if k.lower() == "location"), "")
-    redirected_to_sso = "vercel.com" in location and "sso" in location
-    ok = status == 200 and not redirected_to_sso
-    detail = f"status={status} location={location or '<none>'}"
-    results.append(_check("Frontend is publicly reachable", ok, detail))
+    # 3. A nested route must resolve to its own index file. This is what proves
+    #    the committed export is present, not just that something answers /.
+    status, _, body = _get(f"{api}{args.page}")
+    ok = status == 200 and b"<!doctype html>" in body[:300].lower()
+    results.append(
+        _check(f"Nested route {args.page} resolves", ok, f"status={status} body={body[:160]!r}")
+    )
 
-    # 4. The API origin must be baked into the shipped bundle.
-    if ok:
-        bundle_urls = re.findall(rb"/_next/static/[A-Za-z0-9_/.-]+\.js", body)
-        api_host = DEFAULT_API_HOST.encode()
-        found = False
-        for url in sorted(set(bundle_urls))[:12]:
-            _, _, chunk = _get(frontend + url.decode("ascii", "ignore"))
-            if api_host in chunk:
-                found = True
-                break
-            if b"localhost:8000" in chunk and api_host not in chunk:
-                detail = "bundle falls back to http://localhost:8000; NEXT_PUBLIC_API_URL was not set at build time"
-                break
-        else:
-            detail = "API origin not found in the first 12 bundle chunks"
-        results.append(
-            _check("Frontend bundle targets the live API", found, detail if not found else "")
+    # 4. The middleware must not own API paths: an unknown API route has to
+    #    keep returning the JSON error shape, not the exported 404 page.
+    status, _, body = _get(f"{api}/api/not-a-route")
+    try:
+        payload = json.loads(body.decode("utf-8"))
+    except (ValueError, UnicodeDecodeError):
+        payload = {}
+    ok = status == 404 and isinstance(payload.get("detail"), str)
+    results.append(
+        _check(
+            "Unknown API route still returns JSON 404",
+            ok,
+            f"status={status} body={body[:160]!r}",
         )
+    )
+
+    # 5. The shipped bundle must use the same-origin relative base. A localhost
+    #    fallback only ever fails for real visitors, never for curl.
+    status, _, body = _get(f"{api}/")
+    if status == 200 and b"<!doctype html>" in body[:300].lower():
+        chunk_urls = sorted(set(re.findall(rb"/_next/static/[A-Za-z0-9_/.-]+\.js", body)))[:12]
+        leaked: str | None = None
+        for url in chunk_urls:
+            _, _, chunk = _get(api + url.decode("ascii", "ignore"))
+            if b"localhost:8000" in chunk:
+                leaked = url.decode("ascii", "ignore")
+                break
+        ok = bool(chunk_urls) and leaked is None
+        detail = (
+            f"bundle chunk {leaked} falls back to http://localhost:8000"
+            if leaked
+            else ("no bundle chunks found in the page" if not chunk_urls else "")
+        )
+        results.append(_check("Bundle uses the same-origin API base", ok, detail))
     else:
         results.append(
-            _check("Frontend bundle targets the live API", False, "skipped: frontend did not load")
+            _check("Bundle uses the same-origin API base", False, "skipped: homepage did not load")
         )
 
     print()
     passed = sum(results)
     print(f"{passed}/{len(results)} checks passed")
     if passed == len(results):
-        print(f"Live: {frontend}")
+        print(f"Live: {api}")
     return 0 if passed == len(results) else 1
 
 

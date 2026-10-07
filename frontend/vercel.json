@@ -5,5 +5,11 @@
   "installCommand": "npm ci",
   "devCommand": "npm run dev",
   "outputDirectory": "out",
-  "regions": ["bom1"]
+  "regions": ["bom1"],
+  "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "https://amucs-nexus-api.onrender.com/api/:path*"
+    }
+  ]
 }
