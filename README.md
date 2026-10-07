@@ -8,6 +8,20 @@ The central principle:
 
 > AMUCS Nexus provides verifiable, source-grounded information rather than confident but unsupported answers.
 
+## Live
+
+- **App:** https://amu-cs-nexus.vercel.app
+- **API:** https://amucs-nexus-api.onrender.com/api/health
+- **API docs:** https://amucs-nexus-api.onrender.com/docs
+
+Both are free-tier. The app reaches the API through a Vercel rewrite of `/api/*`
+to the Render origin, so everything a browser loads comes from one host and no
+CORS allowlist is involved. Check a deployment end to end with:
+
+```bash
+python scripts/verify_live.py --api https://amu-cs-nexus.vercel.app
+```
+
 ## Current status
 
 - Backend (FastAPI): health, notices, search, source-grounded chat, directory, exam, upload, and notification endpoints. SQLAlchemy models and Alembic migration 0005 are applied to the development SQLite database.
@@ -73,16 +87,26 @@ cd frontend; npx tsc --noEmit
 
 ## Deploying
 
-Deployment is automated: `render.yaml` describes the API, `frontend/vercel.json` describes the frontend, and `.github/workflows/ci.yml` runs the backend, AI, ingestion and frontend jobs on every push.
+Deployment is automated: `render.yaml` describes the API, `frontend/vercel.json` describes the frontend, and `.github/workflows/ci.yml` runs the backend, AI, ingestion and frontend jobs on every push. A push to `main` redeploys both services.
 
 ```bash
-# 1. API - Render blueprint, picks up render.yaml automatically
-#    https://render.com/deploy?repo=https://github.com/Aquib2004/amu-cs-nexus
-#    Set GROQ_API_KEY and GEMINI_API_KEY in the dashboard (never commit them).
-# 2. Frontend - Vercel import, Root Directory = frontend
-#    Set NEXT_PUBLIC_API_URL to the Render service URL.
-# 3. Set CORS_ORIGINS on Render to the Vercel origin, then redeploy the API.
+# API  - Render blueprint, picks up render.yaml:
+#        https://render.com/deploy?repo=https://github.com/Aquib2004/amu-cs-nexus
+# UI   - Vercel, Root Directory = frontend
+# Only secret to set: GEMINI_API_KEY (chat + embeddings). Never commit it.
 ```
+
+The frontend is a static export committed at `frontend/out`, because Render's
+Python runtime has no Node and cannot run `next build`. After changing frontend
+source, rebuild it so the committed site matches:
+
+```bash
+cd frontend && npm run build   # writes frontend/out
+```
+
+No CORS or `NEXT_PUBLIC_API_URL` setting is needed: `frontend/vercel.json`
+rewrites `/api/*` to the Render origin, so the browser only ever sees the
+Vercel host.
 
 Full walkthrough, including the security checklist to run before sharing the link, is in `docs/DEPLOYMENT.md`.
 

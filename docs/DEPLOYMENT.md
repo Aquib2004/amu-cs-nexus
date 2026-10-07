@@ -23,8 +23,11 @@ there.
    `https://render.com/deploy?repo=https://github.com/Aquib2004/amu-cs-nexus`
 2. Render reads `render.yaml` automatically.
 3. In the dashboard, set the secrets (never commit them):
-   - `GROQ_API_KEY` - chat
-   - `GEMINI_API_KEY` - embeddings
+   - `GEMINI_API_KEY` - enables the Gemini chatbot and Gemini embeddings. This
+     is the one secret the app needs. Until it is set the chatbot still
+     answers, but from the offline extractive fallback, and the API reports
+     `"provider": "extractive"` instead of `"gemini"`.
+   - `GROQ_API_KEY` - optional alternative (`LLM_PROVIDER=groq`).
 4. Note the API URL, e.g. `https://amucs-nexus-api.onrender.com`.
 5. Verify: `curl https://<api>/api/health` -> `{"status":"ok",...,"database":"ok"}`
 
@@ -37,53 +40,68 @@ fine here: `bootstrap_deploy.py` repopulates from the snapshot on every boot.
 ## 2. Frontend (Vercel)
 
 1. Import the repository at vercel.com and set **Root Directory** to `frontend`.
-2. Set the environment variable:
-   - `NEXT_PUBLIC_API_URL` = your Render API URL
-3. Deploy. You get a `https://*.vercel.app` link.
+2. Deploy. You get a `https://*.vercel.app` link, and every push to `main`
+   redeploys it automatically.
 
-`NEXT_PUBLIC_*` values are inlined at build time, so redeploy after changing it.
+The site is a static export (`next.config.js` sets `output: "export"`), written
+to `frontend/out` and committed, because Render's Python runtime has no Node and
+cannot run `next build`. Rebuild it whenever frontend source changes:
 
-## 3. Point the API at the frontend (required)
+    cd frontend && npm run build
 
-The API's CORS allowlist is explicit, and a wildcard is rejected at startup.
-Set `CORS_ORIGINS` on Render to your Vercel origin (no trailing slash):
+Two settings here break deployments in ways a health check will not show:
 
-    CORS_ORIGINS=https://amu-cs-nexus-2dt6puysf-acme-c82b.vercel.app
+- Do **not** add `outputDirectory` to `vercel.json`. Vercel detects `out/` from
+  `next.config.js`; naming it explicitly made every deployment fail while the
+  site silently kept serving the previous build.
+- Do **not** enable `trailingSlash`. Vercel applies the trailing-slash redirect
+  before rewrites run, so `/api/health` answers 308 to `/api/health/` and the
+  proxy in section 3 never executes.
 
-Then redeploy the API. Without this the browser blocks every request even though
-every endpoint still returns HTTP 200 to curl — a health check cannot catch it.
-Run `python scripts/verify_live.py` to confirm the header is actually present.
+## 3. How the frontend reaches the API (nothing to configure)
+
+`frontend/vercel.json` rewrites `/api/*` to the Render origin:
+
+    { "source": "/api/:path*", "destination": "https://amucs-nexus-api.onrender.com/api/:path*" }
+
+Vercel performs that hop on its own edge, so the browser only ever sees the
+Vercel host and CORS is never consulted. That is why no `CORS_ORIGINS` entry and
+no `NEXT_PUBLIC_API_URL` are required - two values that used to have to be kept
+in step by hand every time the frontend origin changed.
+
+`CORS_ORIGINS` on Render still matters for anyone calling the API directly from
+another origin; a `*` entry is rejected at startup.
 
 ## 4. Share
 
-The frontend URL is the link to share. For a stable project page, add to the
-repository README:
-
-    - Live app: https://<your-app>.vercel.app
-    - API docs:  https://<your-api>.onrender.com/docs
+    - Live app: https://amu-cs-nexus.vercel.app
+    - API docs: https://amucs-nexus-api.onrender.com/docs
 
 ## 5. Verify
 
-The three failure modes below all look like "the site is up" to a server-side
-health check and only bite a real browser. Run the checker after every deploy:
+Run the checker after every deploy. It exercises the deployed site the way a
+browser does, not just the endpoints:
 
-    python scripts/verify_live.py
+    python scripts/verify_live.py --api https://amu-cs-nexus.vercel.app
 
-It exits non-zero unless all four hold, and names the fix for whichever fails:
+It exits non-zero unless all five hold:
 
 | Check | Failure means | Fix |
 | --- | --- | --- |
 | API health | API down or database empty | Render logs; confirm `bootstrap_deploy.py` ran |
-| CORS preflight | API never allowlists the frontend origin | Set `CORS_ORIGINS` on Render, redeploy |
-| Frontend public | Redirected to a login wall | Vercel → Settings → Deployment Protection → None |
-| Bundle targets API | `NEXT_PUBLIC_API_URL` missing at build time | Set it in Vercel, **redeploy** (build-time var) |
+| Homepage served as HTML | Export not deployed; FastAPI is answering `/` | Rebuild `frontend/out`, push |
+| Nested route resolves | Export present but routing broken | Compare `frontend/out` with a fresh build |
+| Unknown API route still returns JSON 404 | Frontend middleware is shadowing the API | It must fall through when no file matches |
+| Bundle uses the same-origin API base | Bundle hardcodes `http://localhost:8000` | Rebuild `frontend/out`, push |
 
-Point it at different hosts with `--api` / `--frontend`. It deliberately does
-not follow redirects, because Deployment Protection answers `302` to Vercel SSO
-and a client that follows it would report the login page as a healthy `200`.
+It deliberately does not follow redirects, so a service parked behind a login
+wall is reported as a failure instead of being mistaken for a healthy `200`.
 
 ## Security checklist before going public
 
+- [ ] **Set `GEMINI_API_KEY` in the Render dashboard.** The site is public, so
+      set it there rather than pasting the key anywhere else. Until then the
+      chatbot runs in offline extractive mode.
 - [ ] **Rotate `GROQ_API_KEY`.** A key pasted into chat is compromised. Revoke
       in the Groq console and set the new one in the Render dashboard.
 - [ ] Confirm `.env`, `*.db`, `*.pem` are not in git: `git ls-files | grep -E "\.env|\.db|\.pem"`

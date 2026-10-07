@@ -34,11 +34,12 @@ services:
       - key: DATABASE_URL
         value: sqlite:///./amucs_nexus_prod.db
       - key: CORS_ORIGINS
-        # Comma-separated. A request origin must match exactly (scheme + host +
-        # port), otherwise the browser gets no access-control-allow-origin and
-        # every API call from the frontend fails. Must be updated whenever the
-        # frontend origin changes.
-        value: https://amu-cs-nexus-2dt6puysf-acme-c82b.vercel.app
+        # Comma-separated, exact match on scheme + host + port; `*` is rejected
+        # at startup. The app itself does not need an entry here:
+        # frontend/vercel.json proxies /api/*, so the browser only ever sees
+        # the Vercel origin and CORS is never consulted. This list exists for
+        # calling the API directly from some other site.
+        value: https://amu-cs-nexus.vercel.app
       - key: AMU_TLS_TRUST
         value: platform
       - key: NOTICE_SYNC_ENABLED
